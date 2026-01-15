@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Handsontable ejemplo tipo Excel</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.js"></script>
+  <style>
+    body {font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f1f5f9;}
+    h2 {text-align:center; margin-bottom:20px;}
+    #hot {width: 100%; height: 400px; margin: auto;}
+  </style>
+</head>
+<body>
+  <h2>Tabla de Prendas (Handsontable)</h2>
+  <div id="hot"></div>
+
+  <script>
+    const container = document.getElementById('hot');
+
+    const data = [
+      ["camiseta", 1, 120],
+      ["blusa", 2, 12],
+      ["jean", 2, 15],
+    ];
+
+    const hot = new Handsontable(container, {
+      data: data,
+      colHeaders: ['prenda', 'cantidad', 'precio', 'total'],
+      rowHeaders: true,
+      stretchH: 'all',
+      width: '100%',
+      height: '100%',
+      licenseKey: 'non-commercial-and-evaluation',
+      columns: [
+        { type: 'text' },
+        { type: 'numeric', numericFormat: { pattern: '0' } },
+        { type: 'numeric', numericFormat: { pattern: '0.[00]' } },
+        { 
+          type: 'numeric', 
+          readOnly: true,
+          renderer: (instance, td, row, col, prop, value) => {
+            const cantidad = Number(instance.getDataAtCell(row, 1)) || 0;
+            const precio   = Number(instance.getDataAtCell(row, 2)) || 0;
+            const total    = cantidad * precio;
+            td.innerText = total;
+          }
+        }
+      ],
+      contextMenu: true,
+      filters: true,
+      dropdownMenu: true,
+    });
+  </script>
+</body>
+</html>

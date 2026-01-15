@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Consumo General</title>
+  <!-- Librería para exportar a Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f2f2f2; }
+    button { padding: 10px 15px; background: #28a745; color: white; border: none; cursor: pointer; font-size: 14px; }
+    button:hover { background: #218838; }
+  </style>
+</head>
+<body>
+  <h2>📊 Consumo General</h2>
+  <button id="btnExcel">📥 Descargar Excel</button>
+
+  <table id="tablaDatos">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Tipo de Máquina</th>
+        <th>Total General</th>
+        <th>Fecha</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const apiUrl = "https://pruebas.megawebsistem.com/admin/api/apiConsumoGeneral";
+    let datosAPI = [];
+
+    // 1. Consumir API y mostrar en tabla
+    async function cargarDatos() {
+      try {
+        const res = await fetch(apiUrl);
+        datosAPI = await res.json();
+
+        const tbody = document.querySelector("#tablaDatos tbody");
+        tbody.innerHTML = "";
+
+        datosAPI.forEach(reg => {
+          let fila = `
+            <tr>
+              <td>${reg.id}</td>
+              <td>${reg.tipo_maquina}</td>
+              <td>${reg.total_general}</td>
+              <td>${reg.created_at}</td>
+              <td>${reg.accion}</td>
+            </tr>
+          `;
+          tbody.innerHTML += fila;
+        });
+      } catch (err) {
+        console.error("❌ Error al cargar datos:", err);
+      }
+    }
+
+    // 2. Exportar a Excel con encabezados en español
+    function descargarExcel() {
+      if (datosAPI.length === 0) {
+        alert("No hay datos para exportar");
+        return;
+      }
+
+      // Mapear datos con encabezados en español
+      const datosFormateados = datosAPI.map(reg => ({
+        "ID": reg.id,
+        "Tipo de Máquina": reg.tipo_maquina,
+        "Total General": reg.total_general,
+        "Fecha": reg.created_at,
+        "Acción": reg.accion
+      }));
+
+      // Crear hoja y libro de Excel
+      const ws = XLSX.utils.json_to_sheet(datosFormateados);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Consumo");
+
+      // Descargar archivo
+      XLSX.writeFile(wb, "ConsumoGeneral.xlsx");
+    }
+
+    // Eventos
+    document.getElementById("btnExcel").addEventListener("click", descargarExcel);
+
+    // Cargar datos al abrir la página
+    cargarDatos();
+  </script>
+</body>
+</html>

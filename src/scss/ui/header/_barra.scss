@@ -1,0 +1,29 @@
+@use 'base/variables' as v;
+@use 'base/mixins' as m;
+@use "sass:color";
+
+
+.barra {
+    // background-color: darken(v.$cyan, 0.9%);
+    background-color: color.adjust(v.$naranja, $lightness: -0.9%);
+    &__contenido{
+        @include m.contenedor;
+        display: flex;
+       flex-direction: column;
+       @include m.desktop{
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        
+       }
+       
+
+    }
+    &__logo{
+        padding: 3rem;
+        font-family: v.$dead;
+        @include m.texto-degradado(v.$blanco,v.$blanco);
+        @include m.texto-fluido(2rem,3rem);
+        @include m.logo;
+    }
+}

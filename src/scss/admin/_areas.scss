@@ -1,0 +1,278 @@
+@use 'base/variables' as v;
+@use 'base/mixins' as m;
+@use 'sass:color';
+
+
+.no-areas{
+    background-color: v.$rojo;
+    color: v.$blanco;
+    padding: 1rem;
+    border-radius: 1rem;
+    text-align: center;
+    a{
+        color: v.$indigo;
+    }
+}
+
+.lista-areas{
+    list-style: none;
+    padding: 0;
+    margin-top: 3rem;
+    display: flex;
+    align-items: center;
+
+    // para que se vea en columnas
+    @include m.grid(1, 2rem);
+    // para que se vea 2 columnas
+    @include m.tablet{
+        @include m.grid(2,2rem);
+    }
+    // para que se vea 3 columnas
+    @include m.desktop{
+        @include m.grid(3,2rem);
+    }
+
+    .areas{
+        background-color: v.$cyan;
+        min-height: 12rem;
+        
+        padding: 2rem;
+        padding-top: 4rem;
+        text-align: center;
+        a{
+            color: v.$blanco;
+        }
+
+        
+    }
+
+}
+
+.areas{
+    border-radius: 1rem;
+    
+    // justify-content: center;
+    &:hover{
+        // background-color: darken(v.$cyan, 5%);
+        background-color: color.adjust(v.$cyan, $lightness: -5%);
+
+        font-size: 2rem;
+    }
+}
+
+
+.lista-areas-produccion{
+    list-style: none;
+    padding: 0;
+    margin-top: 3rem;
+    display: flex;
+    align-items: center;
+
+    // para que se vea en columnas
+    @include m.grid(1, 2rem);
+    // para que se vea 2 columnas
+    @include m.tablet{
+        @include m.grid(2,2rem);
+    }
+    // para que se vea 3 columnas
+    @include m.desktop{
+        @include m.grid(3,2rem);
+    }
+
+    .areas-produccion{
+        background-color: v.$naranja;
+        min-height: 12rem;
+        
+        padding: 2rem;
+        padding-top: 4rem;
+        text-align: center;
+        a{
+            color: v.$blanco;
+        }
+
+        
+    }
+    .areas-produccion-estatico{
+        background-color: #839691;;
+        min-height: 12rem;
+        
+        padding: 2rem;
+        padding-top: 4rem;
+        text-align: center;
+        border-radius: 50px 0 50px 0;
+        a{
+            color: v.$blanco;
+        }
+
+        
+    }
+    .areas-produccion-craft{
+        border-radius: 1rem;
+        background-color: #40c5a4;
+        min-height: 12rem;
+        
+        padding: 2rem;
+        padding-top: 4rem;
+        text-align: center;
+        a{
+            color: v.$blanco;
+        }
+
+        
+    }
+    .areas-produccion-estatico-craft{
+        border-radius: 1rem;
+        background-color: #40c5a4;
+        min-height: 12rem;
+        border-radius: 50px 0 50px 0;
+        padding: 2rem;
+        padding-top: 4rem;
+        text-align: center;
+        a{
+            color: v.$blanco;
+        }
+
+        
+    }
+    .areas-produccion-blanco{
+        border-radius: 1rem;
+        background-color: #3b8edb;
+        min-height: 12rem;
+        
+        padding: 2rem;
+        padding-top: 4rem;
+        text-align: center;
+        a{
+            color: v.$blanco;
+        }
+
+        
+    }
+    .areas-produccion-estatico-blanco{
+        border-radius: 1rem;
+        background-color: #3b8edb;
+        min-height: 12rem;
+        border-radius: 50px 0 50px 0;
+        padding: 2rem;
+        padding-top: 4rem;
+        text-align: center;
+        a{
+            color: v.$blanco;
+        }
+
+        
+    }
+    .areas-produccion-medium{
+        border-radius: 1rem;
+        background-color: #d15fe0;
+        min-height: 12rem;
+        
+        padding: 2rem;
+        padding-top: 4rem;
+        text-align: center;
+        a{
+            color: v.$blanco;
+        }
+
+        
+    }
+    .areas-produccion-estatico-medium{
+        border-radius: 1rem;
+        background-color: #d15fe0;
+        min-height: 12rem;
+        border-radius: 50px 0 50px 0;
+        padding: 2rem;
+        padding-top: 4rem;
+        text-align: center;
+        a{
+            color: v.$blanco;
+        }
+
+        
+    }
+
+}
+
+.areas-produccion{
+    border-radius: 1rem;
+    
+    // justify-content: center;
+    &:hover{
+        // background-color: darken(v.$cyan, 5%);
+        background-color: color.adjust(v.$naranja, $lightness: -5%);
+
+        font-size: 2rem;
+    }
+}
+.areas-produccion-blanco:hover {
+    border-radius: 1rem;
+    background-color: rgb(76, 131, 182);
+    font-size: 2rem;
+  }
+  
+  .areas-produccion-craft:hover {
+    border-radius: 1rem;
+    background-color: rgb(64, 179, 150);
+    font-size: 2rem;
+  }
+  
+  .areas-produccion-medium:hover {
+    border-radius: 1rem;
+    background-color: rgb(164, 90, 173);
+    font-size: 2rem;
+  }
+
+
+
+
+
+
+
+
+
+.lista-areas-registro{
+    list-style: none;
+    padding: 0;
+    margin-top: 3rem;
+    display: flex;
+    align-items: center;
+
+    // para que se vea en columnas
+    @include m.grid(1, 2rem);
+    // para que se vea 2 columnas
+    @include m.tablet{
+        @include m.grid(2,2rem);
+    }
+    // para que se vea 3 columnas
+    @include m.desktop{
+        @include m.grid(3,2rem);
+    }
+
+    .areas-registro{
+        background-color: v.$verde;
+        min-height: 12rem;
+        
+        padding: 2rem;
+        padding-top: 4rem;
+        text-align: center;
+        a{
+            color: v.$blanco;
+        }
+
+        
+    }
+
+}
+
+.areas-registro{
+    border-radius: 1rem;
+    
+    // justify-content: center;
+    &:hover{
+        // background-color: darken(v.$cyan, 5%);
+        background-color: color.adjust(v.$cyan, $lightness: -5%);
+
+        font-size: 2rem;
+    }
+}
+

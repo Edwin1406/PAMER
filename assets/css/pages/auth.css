@@ -1,0 +1,72 @@
+/* Fondo centrado */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #279ec2, #d09a4f);
+  height: 100vh;
+}
+
+/* Contenedor principal */
+#auth {
+  height: 100vh;
+}
+
+/* Card del login */
+#auth-card {
+  background: #fff;
+  padding: 3rem 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Títulos */
+.auth-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.auth-subtitle {
+  font-size: 1rem;
+  color: #666;
+}
+
+/* Inputs */
+.input-group-text {
+  background: #f1f1f1;
+  border: 1px solid #ccc;
+  border-right: none;
+}
+
+.input-group .form-control {
+  border-left: none;
+}
+
+.form-control:focus {
+  box-shadow: 0 0 6px rgba(39, 158, 194, 0.4);
+  border-color: #279ec2;
+}
+
+/* Botón */
+button {
+  padding: 0.9rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #2f4bb5;
+}
+
+/* Responsive */
+@media screen and (max-width: 480px) {
+  #auth-card {
+    padding: 2rem 1.5rem;
+    max-width: 90%;
+  }
+}

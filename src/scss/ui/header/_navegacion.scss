@@ -1,0 +1,33 @@
+@use 'base/variables' as v;
+@use 'base/mixins' as m;
+@use "sass:color";
+
+
+.navegacion{
+    display: flex;
+    flex-direction: column;
+    @include m.tablet{
+        flex-direction: row; 
+    }
+    
+    
+    &__enlace{
+        color: v.$blanco;
+        font-size: 1.8rem;
+        padding: 2rem;
+        font-weight: v.$black;
+        text-transform: uppercase;
+        text-align: center;
+
+        &--actual,
+        &:hover{
+            // border-bottom: 2px solid darken(v.$blanco, 20%);
+            border-bottom: 2px solid color.adjust(v.$blanco, $lightness: -20%);
+            // background-color: lighten(v.$cyan, 10%);
+            background-color: color.adjust(v.$blanco, $lightness: 10%);
+            // color:lighten( v.$secundario, 10% );
+            color: color.adjust(v.$naranja, $lightness: 10%);
+            border-radius: 1rem;
+        }
+    }
+}

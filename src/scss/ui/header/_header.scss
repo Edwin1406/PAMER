@@ -1,0 +1,131 @@
+@use 'base/variables' as v;
+@use 'base/mixins' as m;
+
+.header{
+    min-height: 60rem;
+    
+    background-image: url('../img/grafico.svg') ,url('../img/grafico.svg'), linear-gradient(to right,rgba(v.$naranja2,1),rgba(v.$blanco,
+        .1)),url('../img/fondo.jpg');
+    // background-repeat:  no-repeat, no-repeat;
+    // background-position: center;
+   
+    // background: radial-gradient(circle, rgb(134, 150, 153) 0%, rgba(119, 120, 122, 0.734) 100%);
+
+
+    background-repeat: no-repeat;
+    background-size: 400px,400px,cover,cover;
+    // background-position: top left,bottom right,center,center;
+    background-position: top left, bottom right , center top ,center top;
+    @include m.tablet {
+        height: 60rem;
+    
+    }
+
+
+    &__contenedor{
+        @include m.contenedor;
+    }
+   &__navegacion{
+    padding: 5rem 0;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    @include m.tablet 
+    {
+        justify-content: flex-end; 
+       
+    }
+
+   }
+   &__enlace{
+    color: v.$blanco;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    font-weight: v.$bold;
+    &:hover{
+        // color: v.$negro;
+        @include m.texto-degradado(v.$negro,v.$gris);
+
+        border-bottom: 1px solid v.$rojo;
+    }
+
+   }
+
+
+   &__form{
+    display: flex;
+
+   }
+
+   &__submit{
+       @extend .header__enlace;
+    border: 0;
+    background: none;
+   }
+
+
+
+   &__contenido{
+    padding-top: 6rem;
+    text-align: center;
+    @include m.tablet {
+        padding-top: 5rem;   
+        text-align: left;
+    }
+
+   }
+
+   &__logo{
+    @include m.texto-fluido(1rem,8rem);
+    text-align: center;
+    font-family: v.$dead;
+    color: v.$negro;
+    padding-right: 34rem;
+    margin-top: 0;
+    padding: 2rem 0; // Ajusta los valores según sea necesario
+    @include m.texto-degradado(v.$blanco,v.$naranja);
+    @include m.tablet {
+        display: inline-block;
+        padding-top: 4.9rem;
+        padding-bottom: 4.9rem;
+        padding-right: 1rem;
+        &:hover{
+            @include m.texto-degradado(v.$naranja,v.$blanco);
+
+        }
+
+        // padding: 4.9rem 0; // Ajusta los valores según sea necesario
+    }
+   }
+
+   &__texto{
+    font-size: 3rem;
+    font-weight: v.$bold;
+    color: v.$blanco;
+    margin: 1rem 0;
+    text-align: center;
+    text-transform: uppercase;
+    @include m.tablet {
+        font-size: 4rem;
+        // text-align: left;
+        
+    }
+    &--modalidad{
+        font-size: 2rem;
+    }
+
+   }
+
+   &__boton{
+       text-transform: uppercase;
+       margin: 2rem 0;
+    @include m.boton(v.$secundario,v.$blanco);
+    @include m.tablet {
+        width: auto;
+        
+    }
+   }
+  
+
+
+}
