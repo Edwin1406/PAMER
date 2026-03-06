@@ -1998,6 +1998,43 @@ $selIf    = function ($left, $right) {
             return rows[position];
         }
 
+        async function focusHorizontalCell(cell, direction = 1) {
+            const field = cell.getField();
+            const currentFieldIndex = editableFields.indexOf(field);
+            if (currentFieldIndex === -1) return;
+
+            const rows = table.getRows();
+            const currentRow = cell.getRow();
+            const rowIndex = rows.findIndex((rowComponent) => rowComponent.getIndex() === currentRow.getIndex());
+            if (rowIndex === -1) return;
+
+            let nextRowIndex = rowIndex;
+            let nextFieldIndex = currentFieldIndex + direction;
+
+            if (direction > 0 && nextFieldIndex >= editableFields.length) {
+                nextRowIndex += 1;
+                nextFieldIndex = 0;
+            }
+
+            if (direction < 0 && nextFieldIndex < 0) {
+                nextRowIndex -= 1;
+                nextFieldIndex = editableFields.length - 1;
+            }
+
+            if (nextRowIndex < 0) return;
+
+            const nextRowComponent = await ensureRowAtPosition(nextRowIndex);
+            const nextField = editableFields[nextFieldIndex];
+            const nextCell = nextRowComponent?.getCell(nextField);
+
+            if (!nextCell) return;
+
+            nextCell.getElement()?.click();
+            window.setTimeout(() => {
+                nextCell.edit();
+            }, 0);
+        }
+
         async function applyPastedMatrix(text) {
             if (!activeCell) return;
 
@@ -2118,12 +2155,7 @@ $selIf    = function ($left, $right) {
                         const movePrev = event.shiftKey;
                         commit().then(() => {
                             window.setTimeout(() => {
-                                if (movePrev) {
-                                    cell.navigatePrev();
-                                    return;
-                                }
-
-                                cell.navigateNext();
+                                focusHorizontalCell(cell, movePrev ? -1 : 1);
                             }, 0);
                         });
                         return;
