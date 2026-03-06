@@ -85,45 +85,84 @@ for (let i = 0; i < sidebarItems.length; i++) {
 }
 
 // Sidebar toggle on load and resize
-window.addEventListener('DOMContentLoaded', () => {
-    let w = window.innerWidth;
+const SIDEBAR_STATE_KEY = 'pamer-sidebar-state';
+
+function getSavedSidebarState() {
+    try {
+        return localStorage.getItem(SIDEBAR_STATE_KEY);
+    } catch (error) {
+        return null;
+    }
+}
+
+function saveSidebarState(state) {
+    try {
+        localStorage.setItem(SIDEBAR_STATE_KEY, state);
+    } catch (error) {
+        // Ignore storage errors and keep current visual state only.
+    }
+}
+
+function applySidebarState() {
     const sidebar = document.getElementById('sidebar');
     const app = document.getElementById('app');
-    if (sidebar && w < 1200) {
-        sidebar.classList.remove('active');
+    if (!sidebar || !app) return;
+
+    const isDesktop = window.innerWidth >= 1200;
+    const savedState = getSavedSidebarState();
+    const shouldCollapse = savedState === 'collapsed';
+
+    if (isDesktop) {
+        sidebar.classList.add('active');
+        app.classList.toggle('sidebar-collapsed', shouldCollapse);
+        return;
     }
-    if (app && w >= 1200) {
-        app.classList.remove('sidebar-collapsed');
+
+    app.classList.remove('sidebar-collapsed');
+    sidebar.classList.toggle('active', !shouldCollapse);
+}
+
+function setSidebarCollapsed(collapsed) {
+    const sidebar = document.getElementById('sidebar');
+    const app = document.getElementById('app');
+    if (!sidebar || !app) return;
+
+    const isDesktop = window.innerWidth >= 1200;
+    saveSidebarState(collapsed ? 'collapsed' : 'expanded');
+
+    if (isDesktop) {
+        sidebar.classList.add('active');
+        app.classList.toggle('sidebar-collapsed', collapsed);
+        return;
     }
+
+    app.classList.remove('sidebar-collapsed');
+    sidebar.classList.toggle('active', !collapsed);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar && !getSavedSidebarState() && window.innerWidth < 1200) {
+        saveSidebarState('collapsed');
+    }
+    applySidebarState();
 });
 
 window.addEventListener('resize', () => {
-    let w = window.innerWidth;
-    const sidebar = document.getElementById('sidebar');
-    const app = document.getElementById('app');
-    if (sidebar) {
-        if (w < 1200) {
-            if (app) app.classList.remove('sidebar-collapsed');
-            sidebar.classList.remove('active');
-        } else {
-            sidebar.classList.add('active');
-        }
-    }
+    applySidebarState();
 });
 
 // Burger menu button
 const burgerBtn = document.querySelector('.burger-btn');
 if (burgerBtn) {
     burgerBtn.addEventListener('click', () => {
-        const sidebar = document.getElementById('sidebar');
         const app = document.getElementById('app');
         if (window.innerWidth >= 1200 && app) {
-            app.classList.toggle('sidebar-collapsed');
+            setSidebarCollapsed(!app.classList.contains('sidebar-collapsed'));
             return;
         }
-        if (sidebar) {
-            sidebar.classList.toggle('active');
-        }
+        const sidebar = document.getElementById('sidebar');
+        setSidebarCollapsed(sidebar ? sidebar.classList.contains('active') : true);
     });
 }
 
@@ -131,15 +170,12 @@ if (burgerBtn) {
 const sidebarHide = document.querySelector('.sidebar-hide');
 if (sidebarHide) {
     sidebarHide.addEventListener('click', () => {
-        const sidebar = document.getElementById('sidebar');
         const app = document.getElementById('app');
         if (window.innerWidth >= 1200 && app) {
-            app.classList.add('sidebar-collapsed');
+            setSidebarCollapsed(true);
             return;
         }
-        if (sidebar) {
-            sidebar.classList.toggle('active');
-        }
+        setSidebarCollapsed(true);
     });
 }
 
