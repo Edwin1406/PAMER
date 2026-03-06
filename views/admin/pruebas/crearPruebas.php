@@ -888,6 +888,7 @@ $selIf    = function ($left, $right) {
 
 
 <script>
+    window.addEventListener('DOMContentLoaded', () => {
     // ---------- Puentes PHP ----------
     const ID_NOTA = <?= json_encode($id_nota ?? null) ?>;
 
@@ -1419,6 +1420,7 @@ $selIf    = function ($left, $right) {
                 setSaveState('Error al eliminar', 'error');
             }
         });
+    });
     });
 </script>
 
