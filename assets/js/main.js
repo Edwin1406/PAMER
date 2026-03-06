@@ -88,16 +88,22 @@ for (let i = 0; i < sidebarItems.length; i++) {
 window.addEventListener('DOMContentLoaded', () => {
     let w = window.innerWidth;
     const sidebar = document.getElementById('sidebar');
+    const app = document.getElementById('app');
     if (sidebar && w < 1200) {
         sidebar.classList.remove('active');
+    }
+    if (app && w >= 1200) {
+        app.classList.remove('sidebar-collapsed');
     }
 });
 
 window.addEventListener('resize', () => {
     let w = window.innerWidth;
     const sidebar = document.getElementById('sidebar');
+    const app = document.getElementById('app');
     if (sidebar) {
         if (w < 1200) {
+            if (app) app.classList.remove('sidebar-collapsed');
             sidebar.classList.remove('active');
         } else {
             sidebar.classList.add('active');
@@ -110,6 +116,11 @@ const burgerBtn = document.querySelector('.burger-btn');
 if (burgerBtn) {
     burgerBtn.addEventListener('click', () => {
         const sidebar = document.getElementById('sidebar');
+        const app = document.getElementById('app');
+        if (window.innerWidth >= 1200 && app) {
+            app.classList.toggle('sidebar-collapsed');
+            return;
+        }
         if (sidebar) {
             sidebar.classList.toggle('active');
         }
@@ -121,6 +132,11 @@ const sidebarHide = document.querySelector('.sidebar-hide');
 if (sidebarHide) {
     sidebarHide.addEventListener('click', () => {
         const sidebar = document.getElementById('sidebar');
+        const app = document.getElementById('app');
+        if (window.innerWidth >= 1200 && app) {
+            app.classList.add('sidebar-collapsed');
+            return;
+        }
         if (sidebar) {
             sidebar.classList.toggle('active');
         }

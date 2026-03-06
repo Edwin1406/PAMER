@@ -1339,8 +1339,8 @@ $selIf    = function ($left, $right) {
 
                 <div class="row">
                     <section id="basic-vertical-layouts">
-                        <div class="row match-height">
-                            <div class="col-md-4 col-12">
+                        <div class="row match-height g-4">
+                            <div class="col-lg-6 col-12">
                                 <div class="card" style="background-color: #dacdcdff;">
                                     <div class="card-content">
                                         <div class="card-body">
@@ -1384,10 +1384,7 @@ $selIf    = function ($left, $right) {
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4 col-12">
-
-                            </div>
-                            <div class="col-md-4 col-12">
+                            <div class="col-lg-6 col-12">
                                 <div class="card" style="background-color: #dacdcdff;">
 
                                     <div class="card-content">
@@ -1494,32 +1491,4 @@ $selIf    = function ($left, $right) {
         return true; // Permite que el formulario se envíe
     }
 </script>
-
-
-
-<style>
-    .container,
-    .container-lg,
-    .container-md,
-    .container-sm,
-    .container-xl,
-    .container-xxl {
-        max-width: 100% !important;
-    }
-
-
-    @media (min-width: 992px) {
-        #sidebar {
-            display: none !important;
-        }
-    }
-
-
-
-    #main {
-        margin-left: 0 !important;
-        padding: 2rem;
-    }
-</style>
-
 </div>
