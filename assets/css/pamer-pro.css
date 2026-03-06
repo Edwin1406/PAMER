@@ -864,6 +864,7 @@ small.text-muted {
 
 .auth-galaxy,
 .auth-galaxy__nebula,
+.auth-galaxy__canvas,
 .auth-galaxy__stars,
 .auth-galaxy__orbit {
   position: absolute;
@@ -880,7 +881,13 @@ small.text-muted {
     linear-gradient(125deg, #04111f 0%, #071a39 48%, #03122a 100%);
 }
 
+.auth-galaxy__canvas {
+  z-index: 0;
+  opacity: 0.88;
+}
+
 .auth-galaxy__nebula {
+  z-index: 1;
   filter: blur(26px);
   opacity: 0.72;
   animation: authNebulaDrift 18s ease-in-out infinite alternate;
@@ -913,6 +920,7 @@ small.text-muted {
 }
 
 .auth-galaxy__stars {
+  z-index: 2;
   opacity: 0.5;
   background-image:
     radial-gradient(circle at 12% 22%, rgba(255, 255, 255, 0.95) 0 1px, transparent 1.5px),
@@ -926,6 +934,7 @@ small.text-muted {
 }
 
 .auth-galaxy__orbit {
+  z-index: 1;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
