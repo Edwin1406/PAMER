@@ -2058,6 +2058,74 @@ $selIf    = function ($left, $right) {
             }
         }
 
+        function createAutoSaveEditor(parseValue) {
+            return function autoSaveEditor(cell, onRendered, success, cancel) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = cell.getValue() ?? '';
+                input.className = 'tabulator-edit-input';
+                input.style.width = '100%';
+                input.style.height = '100%';
+                input.style.border = '0';
+                input.style.padding = '0 0.35rem';
+                input.style.background = 'transparent';
+                input.style.outline = 'none';
+
+                let finished = false;
+
+                const commit = async () => {
+                    if (finished) return;
+                    finished = true;
+                    success(parseValue(input.value));
+
+                    await Promise.resolve();
+                    try {
+                        await handleCellEdited(cell);
+                    } catch (error) {
+                        console.warn('editor autosave error:', error);
+                        setSaveState('Error al procesar la fila', 'error');
+                        showToast('error', 'No se pudo procesar la edicion.');
+                    }
+                };
+
+                const abort = () => {
+                    if (finished) return;
+                    finished = true;
+                    cancel();
+                };
+
+                onRendered(() => {
+                    input.focus();
+                    input.select();
+                });
+
+                input.addEventListener('blur', () => {
+                    commit();
+                });
+
+                input.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === 'Tab') {
+                        event.preventDefault();
+                        commit();
+                        return;
+                    }
+
+                    if (event.key === 'Escape') {
+                        event.preventDefault();
+                        abort();
+                    }
+                });
+
+                return input;
+            };
+        }
+
+        const autoSaveTextEditor = createAutoSaveEditor((value) => value);
+        const autoSaveNumberEditor = createAutoSaveEditor((value) => {
+            const trimmed = str(value);
+            return trimmed === '' ? 0 : numberValue(trimmed);
+        });
+
         async function handleDeleteRow(rowComponent) {
             const rowData = rowComponent.getData();
 
@@ -2133,18 +2201,18 @@ $selIf    = function ($left, $right) {
                 { title: '#', formatter: 'rownum', width: 54, hozAlign: 'center', headerSort: false, editor: false, frozen: true },
                 { title: 'id', field: 'id', width: 74, hozAlign: 'center', headerSort: false, formatter: (cell) => `<span class="text-mono">${cell.getValue() || ''}</span>` },
                 { title: 'cod', field: 'codigo_nota_pedido', width: 92, headerSort: false },
-                { title: 'cantid', field: 'cantidad', editor: 'number', hozAlign: 'right', headerSort: false, formatter: (cell) => formatNumberCell(cell, 0) },
-                { title: 'etq', field: 'etiqueta', editor: 'input', headerSort: false },
+                { title: 'cantid', field: 'cantidad', editor: autoSaveNumberEditor, hozAlign: 'right', headerSort: false, formatter: (cell) => formatNumberCell(cell, 0) },
+                { title: 'etq', field: 'etiqueta', editor: autoSaveTextEditor, headerSort: false },
                 { title: 'saldo', field: 'saldo', hozAlign: 'right', headerSort: false, formatter: (cell) => formatNumberCell(cell, 2) },
-                { title: 'num_fact', field: 'num_factura', editor: 'input', headerSort: false },
-                { title: 'prenda', field: 'prenda', editor: 'input', headerSort: false },
-                { title: 'composicion', field: 'composicion', editor: 'input', headerSort: false },
-                { title: 'precio_u', field: 'precio_unitario', editor: 'number', hozAlign: 'right', headerSort: false, formatter: (cell) => formatNumberCell(cell, 2) },
-                { title: 'tienda', field: 'tienda', editor: 'input', headerSort: false },
-                { title: 'marca', field: 'marca', editor: 'input', headerSort: false },
-                { title: 'pais', field: 'pais', editor: 'input', headerSort: false },
-                { title: 'num_caja', field: 'num_caja', editor: 'input', headerSort: false },
-                { title: 'bodega', field: 'bodega', editor: 'input', headerSort: false },
+                { title: 'num_fact', field: 'num_factura', editor: autoSaveTextEditor, headerSort: false },
+                { title: 'prenda', field: 'prenda', editor: autoSaveTextEditor, headerSort: false },
+                { title: 'composicion', field: 'composicion', editor: autoSaveTextEditor, headerSort: false },
+                { title: 'precio_u', field: 'precio_unitario', editor: autoSaveNumberEditor, hozAlign: 'right', headerSort: false, formatter: (cell) => formatNumberCell(cell, 2) },
+                { title: 'tienda', field: 'tienda', editor: autoSaveTextEditor, headerSort: false },
+                { title: 'marca', field: 'marca', editor: autoSaveTextEditor, headerSort: false },
+                { title: 'pais', field: 'pais', editor: autoSaveTextEditor, headerSort: false },
+                { title: 'num_caja', field: 'num_caja', editor: autoSaveTextEditor, headerSort: false },
+                { title: 'bodega', field: 'bodega', editor: autoSaveTextEditor, headerSort: false },
                 { title: 'total', field: 'total', hozAlign: 'right', headerSort: false, formatter: (cell) => formatNumberCell(cell, 2) },
                 {
                     title: 'Acciones',
@@ -2166,15 +2234,7 @@ $selIf    = function ($left, $right) {
                 activeCell = cell;
                 gridFocused = true;
             },
-            cellEdited: async (cell) => {
-                try {
-                    await handleCellEdited(cell);
-                } catch (error) {
-                    console.warn('cellEdited error:', error);
-                    setSaveState('Error al procesar la fila', 'error');
-                    showToast('error', 'No se pudo procesar la edicion.');
-                }
-            }
+            cellEdited: () => {}
         });
 
         table.on('tableBuilt', async () => {
