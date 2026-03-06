@@ -129,7 +129,7 @@ if (sidebarHide) {
 
 // Perfect Scrollbar Init
 if (typeof PerfectScrollbar === 'function') {
-    const container = document.querySelector(".sidebar-wrapper");
+    const container = document.querySelector(".sidebar-menu");
     if (container) {
         const ps = new PerfectScrollbar(container, {
             wheelPropagation: false
