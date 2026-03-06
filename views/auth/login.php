@@ -1,14 +1,5 @@
 <div id="auth" class="auth-login-shell">
-    <div class="auth-login-panel">
-        <aside class="auth-login-panel__intro auth-login-panel__intro--logo">
-            <div class="auth-brand-stage" aria-hidden="true">
-                <span class="auth-brand-stage__glow auth-brand-stage__glow--a"></span>
-                <span class="auth-brand-stage__glow auth-brand-stage__glow--b"></span>
-                <span class="auth-brand-stage__grid"></span>
-                <img src="/src/img/PAMERVAL-LOGO.png" alt="Pamerval" class="auth-brand-stage__logo">
-            </div>
-        </aside>
-
+    <div class="auth-login-panel auth-login-panel--single">
         <div id="auth-card">
             <div class="auth-logo text-center mb-4">
                 <img src="/src/img/PAMERVAL-LOGO.png" alt="Pamerval" class="auth-logo__image">
