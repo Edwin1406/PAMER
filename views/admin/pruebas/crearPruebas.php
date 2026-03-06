@@ -1013,6 +1013,34 @@ $selIf    = function ($left, $right) {
         }
     }
 
+    async function queueRowSave(row) {
+        if (!row || isEmptySpareRow(row)) return true;
+
+        row._pendingSync = true;
+
+        if (row._saveQueuePromise) {
+            return row._saveQueuePromise;
+        }
+
+        row._saveQueuePromise = (async () => {
+            let ok = true;
+
+            while (row._pendingSync) {
+                row._pendingSync = false;
+                const saved = await saveOrUpdateFila(row);
+                if (!saved) {
+                    ok = false;
+                    break;
+                }
+            }
+
+            delete row._saveQueuePromise;
+            return ok;
+        })();
+
+        return row._saveQueuePromise;
+    }
+
     function isEmptySpareRow(r) {
         if (!r) return true;
         return !r.id && !hasDraftData(r);
@@ -1261,7 +1289,6 @@ $selIf    = function ($left, $right) {
     async function saveOrUpdateFila(row) {
         // ✅ Si no tiene id, NO crear si no hay clave
         if (!row.id && !hasDraftData(row)) return true;
-        if (row._savePromise) return await row._savePromise;
 
         ensureDraftId(row);
 
@@ -1288,49 +1315,37 @@ $selIf    = function ($left, $right) {
 
         const url = row.id ? '/admin/pruebas/actualizarPruebas' : '/admin/pruebas/crearPruebasAjax';
 
-        const pendingRequest = (async () => {
-            const resp = await fetch(url, {
-                method: 'POST',
-                body: fd,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin'
-            });
+        const resp = await fetch(url, {
+            method: 'POST',
+            body: fd,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
 
-            let json = null;
-            try {
-                json = await resp.json();
-            } catch {}
-
-            if (json?.ok) {
-                if (json.id) {
-                    row.id = json.id;
-                    delete row._draftId;
-                }
-                row.codigo_nota_pedido = ID_NOTA || row.codigo_nota_pedido;
-                row.tienda = row.tienda || tienda;
-                row.marca = row.marca || marca;
-                row.pais = row.pais || pais;
-                row.num_factura = row.num_factura || num_factura;
-                hot.render();
-                return true;
-            }
-
-            console.warn('saveOrUpdateFila error:', json);
-            return false;
-        })();
-
-        row._savePromise = pendingRequest;
-
+        let json = null;
         try {
-            return await pendingRequest;
-        } finally {
-            if (row._savePromise === pendingRequest) {
-                delete row._savePromise;
+            json = await resp.json();
+        } catch {}
+
+        if (json?.ok) {
+            if (json.id) {
+                row.id = json.id;
+                delete row._draftId;
             }
+            row.codigo_nota_pedido = ID_NOTA || row.codigo_nota_pedido;
+            row.tienda = row.tienda || tienda;
+            row.marca = row.marca || marca;
+            row.pais = row.pais || pais;
+            row.num_factura = row.num_factura || num_factura;
+            hot.render();
+            return true;
         }
+
+        console.warn('saveOrUpdateFila error:', json);
+        return false;
     }
 
     async function refreshTabla() {
@@ -1370,7 +1385,7 @@ $selIf    = function ($left, $right) {
 
         for (const r of nuevas) {
             recalcRow(hot.getSourceData().indexOf(r));
-            const exito = await saveOrUpdateFila(r);
+            const exito = await queueRowSave(r);
             if (!exito) ok = false;
         }
 
@@ -1397,7 +1412,7 @@ $selIf    = function ($left, $right) {
             if (!r.id && !hasDraftData(r)) continue;
             if (isEmptySpareRow(r)) continue;
 
-            const exito = await saveOrUpdateFila(r);
+            const exito = await queueRowSave(r);
             if (!exito) ok = false;
         }
 
