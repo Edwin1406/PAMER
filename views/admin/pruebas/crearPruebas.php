@@ -1812,8 +1812,6 @@ $selIf    = function ($left, $right) {
             if (typeof rowComponent.reformat === 'function') {
                 rowComponent.reformat();
             }
-
-            table?.redraw(true);
         }
 
         function buildPayload(row) {
@@ -2029,25 +2027,35 @@ $selIf    = function ($left, $right) {
 
             if (!nextCell) return;
 
-            activeCell = nextCell;
+            try {
+                await table.scrollToRow(nextRowComponent, 'nearest', false);
+            } catch (error) {
+                // ignore scroll errors for rows already in viewport
+            }
+
+            await new Promise((resolve) => window.requestAnimationFrame(resolve));
+            await new Promise((resolve) => window.requestAnimationFrame(resolve));
+
+            const targetCell = nextRowComponent.getCell(nextField);
+            if (!targetCell) return;
+
+            activeCell = targetCell;
             gridFocused = true;
 
-            const nextElement = nextCell.getElement();
-            nextElement?.focus?.();
+            const targetElement = targetCell.getElement();
+            targetElement?.focus?.({ preventScroll: true });
+            targetCell.edit(true);
 
             window.setTimeout(() => {
-                nextCell.edit();
+                const liveElement = targetCell.getElement();
+                const editorInput = liveElement?.querySelector('input, textarea, [contenteditable="true"]');
+                if (!editorInput) return;
 
-                window.setTimeout(() => {
-                    const editorInput = nextElement?.querySelector('input, textarea, [contenteditable="true"]');
-                    if (!editorInput) return;
-
-                    editorInput.focus();
-                    if (typeof editorInput.select === 'function') {
-                        editorInput.select();
-                    }
-                }, 0);
-            }, 0);
+                editorInput.focus();
+                if (typeof editorInput.select === 'function') {
+                    editorInput.select();
+                }
+            }, 20);
         }
 
         async function applyPastedMatrix(text) {
@@ -2127,7 +2135,7 @@ $selIf    = function ($left, $right) {
 
                 let finished = false;
 
-                const commit = async () => {
+                const commit = async (moveDirection = null) => {
                     if (finished) return;
                     finished = true;
                     success(parseValue(input.value));
@@ -2135,6 +2143,9 @@ $selIf    = function ($left, $right) {
                     await Promise.resolve();
                     try {
                         await handleCellEdited(cell);
+                        if (moveDirection) {
+                            await focusHorizontalCell(cell, moveDirection);
+                        }
                     } catch (error) {
                         console.warn('editor autosave error:', error);
                         setSaveState('Error al procesar la fila', 'error');
@@ -2167,12 +2178,7 @@ $selIf    = function ($left, $right) {
                     if (event.key === 'Tab') {
                         event.preventDefault();
                         event.stopPropagation();
-                        const movePrev = event.shiftKey;
-                        commit().then(() => {
-                            window.setTimeout(() => {
-                                focusHorizontalCell(cell, movePrev ? -1 : 1);
-                            }, 0);
-                        });
+                        commit(event.shiftKey ? -1 : 1);
                         return;
                     }
 
@@ -2255,12 +2261,12 @@ $selIf    = function ($left, $right) {
         table = new Tabulator(container, {
             data: initialRows,
             index: '_rowKey',
-            layout: 'fitDataTable',
+            layout: 'fitDataFill',
             height: '100%',
             placeholder: 'Sin registros cargados',
             tabEndNewRow: () => createBlankRow(),
             columnDefaults: {
-                minWidth: 118,
+                minWidth: 126,
                 resizable: true,
                 vertAlign: 'middle',
             },
