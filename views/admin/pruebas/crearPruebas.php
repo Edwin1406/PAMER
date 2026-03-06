@@ -1800,6 +1800,20 @@ $selIf    = function ($left, $right) {
             return `<span class="text-mono">${numberValue(cell.getValue()).toFixed(decimals)}</span>`;
         }
 
+        async function syncRowComponent(rowComponent) {
+            if (!rowComponent) return;
+
+            const rowData = rowComponent.getData();
+            recalcRowData(rowData);
+            await rowComponent.update({ ...rowData });
+
+            if (typeof rowComponent.reformat === 'function') {
+                rowComponent.reformat();
+            }
+
+            table?.redraw(true);
+        }
+
         function buildPayload(row) {
             const fd = new FormData();
             fd.append('id_nota', ID_NOTA ?? row.codigo_nota_pedido ?? '');
@@ -1858,7 +1872,7 @@ $selIf    = function ($left, $right) {
 
             const rowComponent = table.getRow(row._rowKey);
             if (rowComponent) {
-                await rowComponent.update(recalcRowData(row));
+                await syncRowComponent(rowComponent);
             }
 
             return true;
@@ -1913,6 +1927,7 @@ $selIf    = function ($left, $right) {
 
             setSaveState(ok ? 'Autosave al dia' : 'Error al guardar cambios', ok ? 'success' : 'error');
             updateGridMeta();
+            return ok;
         }
 
         async function refreshTabla() {
@@ -2009,8 +2024,7 @@ $selIf    = function ($left, $right) {
                     rowData[field] = values[columnOffset];
                 }
 
-                recalcRowData(rowData);
-                await rowComponent.update(rowData);
+                await syncRowComponent(rowComponent);
                 touchedRows.push(rowData);
             }
 
@@ -2031,14 +2045,16 @@ $selIf    = function ($left, $right) {
 
             const rowComponent = cell.getRow();
             const rowData = rowComponent.getData();
-            recalcRowData(rowData);
-            await rowComponent.update(rowData);
+            await syncRowComponent(rowComponent);
             await syncTrailingBlankRow();
             updateGridMeta();
 
             if (editableFields.includes(cell.getField())) {
                 setSaveState('Guardando cambios...', 'saving');
-                await maybeAutosaveRows([rowData]);
+                const ok = await maybeAutosaveRows([rowData]);
+                if (!ok) {
+                    showToast('error', 'Autosave no pudo guardar la fila.');
+                }
             }
         }
 
@@ -2150,8 +2166,14 @@ $selIf    = function ($left, $right) {
                 activeCell = cell;
                 gridFocused = true;
             },
-            cellEdited: (cell) => {
-                handleCellEdited(cell);
+            cellEdited: async (cell) => {
+                try {
+                    await handleCellEdited(cell);
+                } catch (error) {
+                    console.warn('cellEdited error:', error);
+                    setSaveState('Error al procesar la fila', 'error');
+                    showToast('error', 'No se pudo procesar la edicion.');
+                }
             }
         });
 

@@ -570,9 +570,7 @@ class PruebasController
         $carrito->etiqueta           = $etiqueta;
         $carrito->prenda             = $prenda;
 
-        // ✅ saldo NO debe restar etiqueta (texto). Ajusta si tu negocio requiere otra lógica.
-        // Por defecto lo dejamos igual a la cantidad (o usa 0 si aplica)
-        $carrito->saldo              = $cantidad;
+        $carrito->saldo              = $cantidad - (float)$etiqueta;
 
         $carrito->composicion        = trim((string)($_POST['composicion'] ?? ''));
         $carrito->cantidad           = $cantidad;
