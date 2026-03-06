@@ -696,9 +696,9 @@ $selIf    = function ($left, $right) {
 <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"> -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-<!-- ====== Handsontable ====== -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.css">
-<script src="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.js"></script>
+<!-- ====== Tabulator ====== -->
+<link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator.min.css">
+<script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
 
 <style>
     .hot-card {
@@ -717,15 +717,34 @@ $selIf    = function ($left, $right) {
         height: clamp(240px, 58vh, 820px) !important;
     }
 
-    .handsontable th,
-    .handsontable td {
+    #hot-min .tabulator {
+        border: 0;
+        background: #fff;
         font-size: .92rem;
+    }
+
+    #hot-min .tabulator-header {
+        border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+        background: #f8fafc;
+    }
+
+    #hot-min .tabulator-col,
+    #hot-min .tabulator-cell {
         white-space: nowrap;
     }
 
-    .handsontable .ht_clone_top th,
-    .handsontable .ht_clone_top td {
-        background-color: #f8fafc;
+    #hot-min .tabulator-row .tabulator-cell {
+        border-right-color: rgba(226, 232, 240, 0.9);
+    }
+
+    #hot-min .tabulator-footer {
+        display: none;
+    }
+
+    #hot-min .tabulator-cell.tabulator-editing {
+        outline: 2px solid rgba(13, 110, 253, 0.18);
+        outline-offset: -2px;
+        border-radius: .4rem;
     }
 
     .hot-badge {
@@ -839,7 +858,7 @@ $selIf    = function ($left, $right) {
                         Administrar prendas para Nota de Pedido N° <?= htmlspecialchars($id_nota) ?>
                         <span class="badge text-bg-light hot-badge">Editor tabular</span>
                     </h5>
-                    <div class="text-secondary small">Pega desde Excel: selecciona A1 y usa <kbd>Ctrl/⌘ + V</kbd></div>
+                    <div class="text-secondary small">Pega desde Excel: haz clic en una celda y usa <kbd>Ctrl/⌘ + V</kbd></div>
                     <div class="hot-meta">
                         <span id="hotRowCount" class="hot-pill">0 registros</span>
                         <span class="hot-pill hot-pill--soft">Sin recarga completa</span>
@@ -863,7 +882,7 @@ $selIf    = function ($left, $right) {
             <div class="table-responsive">
                 <div id="hot-min" class="bg-white rounded-3"></div>
             </div>
-            <div class="hot-empty-note">Usa la última fila vacía para agregar nuevos registros. La columna de acciones elimina filas sin salir de esta pantalla.</div>
+            <div class="hot-empty-note">Usa la ultima fila vacia para agregar nuevos registros. Tambien puedes pegar rangos desde Excel y se llenaran desde la celda activa.</div>
         </div>
     </div>
 </div>
@@ -888,7 +907,12 @@ $selIf    = function ($left, $right) {
 
 
 <script>
+    window.__USE_TABULATOR_GRID__ = true;
+</script>
+
+<script>
     window.addEventListener('DOMContentLoaded', () => {
+    if (window.__USE_TABULATOR_GRID__) return;
     // ---------- Puentes PHP ----------
     const ID_NOTA = <?= json_encode($id_nota ?? null) ?>;
 
@@ -1540,6 +1564,601 @@ $selIf    = function ($left, $right) {
 <script>
     // Si usas un plugin como Choices, inicialízalo DESPUÉS de que el HTML ya venga
     // con los <option selected> correctos.
+    </script>
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        if (!window.__USE_TABULATOR_GRID__) return;
+
+        const ID_NOTA = <?= json_encode($id_nota ?? null) ?>;
+        const tienda = <?= json_encode($tienda_nota->tienda ?? '') ?>;
+        const marca = <?= json_encode($tienda_nota->marca ?? '') ?>;
+        const pais = <?= json_encode($tienda_nota->pais ?? '') ?>;
+        const num_factura = <?= json_encode($tienda_nota->num_factura ?? '') ?>;
+        const ID_TIENDA = <?= json_encode($_GET['id'] ?? '') ?>;
+
+        const existentes = <?php
+                            $idUrl = $id_nota ?? null;
+                            $id_tienda = $_GET['id'] ?? null;
+
+                            $out = [];
+                            if (!empty($carritoTemporal2)) {
+                                foreach ($carritoTemporal2 as $r) {
+                                    if ($idUrl != $r->Codigo_Nota_Pedido || $id_tienda != $r->id_tienda) continue;
+                                    $precio = isset($r->precio_unitario) ? (float)$r->precio_unitario : 0.0;
+                                    $cant   = isset($r->cantidad) ? (float)$r->cantidad : 0.0;
+                                    $out[]  = [
+                                        'id'                 => (int)$r->id,
+                                        'codigo_nota_pedido' => $r->Codigo_Nota_Pedido,
+                                        'etiqueta'           => $r->etiqueta,
+                                        'prenda'             => $r->prenda,
+                                        'saldo'              => $r->saldo,
+                                        'composicion'        => $r->composicion,
+                                        'cantidad'           => $cant,
+                                        'precio_unitario'    => $precio,
+                                        'num_factura'        => $r->num_factura,
+                                        'tienda'             => $r->tienda,
+                                        'marca'              => $r->marca,
+                                        'pais'               => $r->pais,
+                                        'num_caja'           => $r->num_caja,
+                                        'bodega'             => $r->bodega,
+                                        'id_tienda'          => $r->id_tienda,
+                                        'total'              => round($cant * $precio, 2),
+                                    ];
+                                }
+                            }
+                            echo json_encode($out, JSON_UNESCAPED_UNICODE);
+                            ?>;
+
+        const container = document.getElementById('hot-min');
+        const autosaveInput = document.getElementById('autosave');
+        const hotRowCount = document.getElementById('hotRowCount');
+        const hotSaveState = document.getElementById('hotSaveState');
+        const toastOkBody = document.getElementById('toastOkBody');
+        const toastErrBody = document.getElementById('toastErrBody');
+        const toastOk = new bootstrap.Toast(document.getElementById('toastOk'), { delay: 1800 });
+        const toastErr = new bootstrap.Toast(document.getElementById('toastErr'), { delay: 2600 });
+
+        const rowSaveQueueMap = new Map();
+        const editableFields = ['cantidad', 'etiqueta', 'num_factura', 'prenda', 'composicion', 'precio_unitario', 'tienda', 'marca', 'pais', 'num_caja', 'bodega'];
+        let nextDraftId = 1;
+        let activeCell = null;
+        let gridFocused = false;
+        let table = null;
+
+        function round(n) {
+            return Math.round((n + Number.EPSILON) * 100) / 100;
+        }
+
+        function str(value) {
+            return (value ?? '').toString().trim();
+        }
+
+        function numberValue(value) {
+            const normalized = typeof value === 'string' ? value.replace(',', '.') : value;
+            const parsed = Number(normalized);
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        function showToast(type, message) {
+            if (type === 'success') {
+                if (toastOkBody) toastOkBody.innerHTML = `<i class="bi bi-check-circle me-2"></i>${message}`;
+                toastOk.show();
+                return;
+            }
+
+            if (toastErrBody) toastErrBody.innerHTML = `<i class="bi bi-x-circle me-2"></i>${message}`;
+            toastErr.show();
+        }
+
+        function setSaveState(message, tone = 'idle') {
+            if (!hotSaveState) return;
+            hotSaveState.dataset.tone = tone;
+            hotSaveState.textContent = message;
+        }
+
+        function hasKeyData(row) {
+            return str(row?.etiqueta) !== '' || str(row?.prenda) !== '';
+        }
+
+        function hasDraftData(row) {
+            if (!row) return false;
+
+            return hasKeyData(row)
+                || str(row?.composicion) !== ''
+                || str(row?.num_caja) !== ''
+                || str(row?.bodega) !== ''
+                || numberValue(row?.cantidad) > 0
+                || numberValue(row?.precio_unitario) > 0;
+        }
+
+        function isEmptySpareRow(row) {
+            return !row?.id && !hasDraftData(row);
+        }
+
+        function recalcRowData(row) {
+            row.codigo_nota_pedido = str(row.codigo_nota_pedido) || str(ID_NOTA);
+            row.cantidad = numberValue(row.cantidad);
+            row.etiqueta = str(row.etiqueta);
+            row.prenda = str(row.prenda);
+            row.composicion = str(row.composicion);
+            row.num_factura = str(row.num_factura) || str(num_factura);
+            row.precio_unitario = numberValue(row.precio_unitario);
+            row.tienda = str(row.tienda) || str(tienda);
+            row.marca = str(row.marca) || str(marca);
+            row.pais = str(row.pais) || str(pais);
+            row.num_caja = str(row.num_caja);
+            row.bodega = str(row.bodega);
+            row.id_tienda = ID_TIENDA;
+            row.saldo = round(row.cantidad - numberValue(row.etiqueta));
+            row.total = round(row.cantidad * row.precio_unitario);
+            return row;
+        }
+
+        function createBlankRow() {
+            const row = {
+                id: '',
+                codigo_nota_pedido: ID_NOTA ?? '',
+                cantidad: 0,
+                etiqueta: '',
+                saldo: 0,
+                num_factura: num_factura ?? '',
+                prenda: '',
+                composicion: '',
+                precio_unitario: 0,
+                tienda: tienda ?? '',
+                marca: marca ?? '',
+                pais: pais ?? '',
+                num_caja: '',
+                bodega: '',
+                total: 0,
+                id_tienda: ID_TIENDA,
+                _rowKey: `draft:${nextDraftId++}`,
+            };
+
+            return recalcRowData(row);
+        }
+
+        function normalizeRow(raw = {}) {
+            const row = {
+                id: raw.id ? Number(raw.id) : '',
+                codigo_nota_pedido: raw.codigo_nota_pedido ?? ID_NOTA ?? '',
+                cantidad: raw.cantidad ?? 0,
+                etiqueta: raw.etiqueta ?? '',
+                saldo: raw.saldo ?? 0,
+                num_factura: raw.num_factura ?? num_factura ?? '',
+                prenda: raw.prenda ?? '',
+                composicion: raw.composicion ?? '',
+                precio_unitario: raw.precio_unitario ?? 0,
+                tienda: raw.tienda ?? tienda ?? '',
+                marca: raw.marca ?? marca ?? '',
+                pais: raw.pais ?? pais ?? '',
+                num_caja: raw.num_caja ?? '',
+                bodega: raw.bodega ?? '',
+                total: raw.total ?? 0,
+                id_tienda: raw.id_tienda ?? ID_TIENDA,
+                _rowKey: raw.id ? `persisted:${raw.id}` : `draft:${nextDraftId++}`,
+            };
+
+            if (row.id) {
+                nextDraftId = Math.max(nextDraftId, row.id + 1);
+            }
+
+            return recalcRowData(row);
+        }
+
+        function updateGridMeta() {
+            if (!table || !hotRowCount) return;
+            const totalRows = table.getData().filter((row) => row && (row.id || hasDraftData(row))).length;
+            hotRowCount.textContent = `${totalRows} registro${totalRows === 1 ? '' : 's'}`;
+        }
+
+        async function syncTrailingBlankRow() {
+            if (!table) return;
+
+            let rows = table.getRows();
+            const blankRows = rows.filter((rowComponent) => isEmptySpareRow(rowComponent.getData()));
+
+            for (let index = 0; index < blankRows.length - 1; index += 1) {
+                await blankRows[index].delete();
+            }
+
+            rows = table.getRows();
+            const lastRow = rows[rows.length - 1];
+
+            if (!lastRow || !isEmptySpareRow(lastRow.getData())) {
+                await table.addRow(createBlankRow(), false);
+            }
+        }
+
+        function formatNumberCell(cell, decimals = 2) {
+            return `<span class="text-mono">${numberValue(cell.getValue()).toFixed(decimals)}</span>`;
+        }
+
+        function buildPayload(row) {
+            const fd = new FormData();
+            fd.append('id_nota', ID_NOTA ?? row.codigo_nota_pedido ?? '');
+            if (row.id) fd.append('id', row.id);
+            fd.append('cantidad', row.cantidad ?? 0);
+            fd.append('etiqueta', row.etiqueta ?? '');
+            fd.append('saldo', row.saldo ?? 0);
+            fd.append('num_factura', str(row.num_factura) || (num_factura ?? ''));
+            fd.append('prenda', row.prenda ?? '');
+            fd.append('composicion', row.composicion ?? '');
+            fd.append('precio_unitario', row.precio_unitario ?? 0);
+            fd.append('tienda', row.tienda ?? '');
+            fd.append('marca', row.marca ?? '');
+            fd.append('pais', row.pais ?? '');
+            fd.append('num_caja', str(row.num_caja) || '');
+            fd.append('bodega', row.bodega ?? '');
+            fd.append('id_tienda', ID_TIENDA);
+            fd.append('total', row.total ?? 0);
+            return fd;
+        }
+
+        async function saveOrUpdateFila(row) {
+            if (!row || isEmptySpareRow(row) || !hasDraftData(row)) return true;
+
+            recalcRowData(row);
+
+            const response = await fetch(row.id ? '/admin/pruebas/actualizarPruebas' : '/admin/pruebas/crearPruebasAjax', {
+                method: 'POST',
+                body: buildPayload(row),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin'
+            });
+
+            let json = null;
+
+            try {
+                json = await response.json();
+            } catch (error) {
+                json = null;
+            }
+
+            if (!json?.ok) {
+                console.warn('saveOrUpdateFila error:', json);
+                return false;
+            }
+
+            if (json.id) {
+                row.id = Number(json.id);
+            } else if (!row.id) {
+                setSaveState('Sincronizando id de la fila...', 'saving');
+                await refreshTabla();
+                return true;
+            }
+
+            const rowComponent = table.getRow(row._rowKey);
+            if (rowComponent) {
+                await rowComponent.update(recalcRowData(row));
+            }
+
+            return true;
+        }
+
+        async function queueRowSave(row) {
+            if (!row || isEmptySpareRow(row)) return true;
+
+            const queueKey = row._rowKey;
+            const existingEntry = rowSaveQueueMap.get(queueKey);
+
+            if (existingEntry) {
+                existingEntry.pending = true;
+                return existingEntry.promise;
+            }
+
+            const entry = {
+                pending: true,
+                promise: null,
+            };
+
+            entry.promise = (async () => {
+                let ok = true;
+
+                while (entry.pending) {
+                    entry.pending = false;
+                    const saved = await saveOrUpdateFila(row);
+                    if (!saved) {
+                        ok = false;
+                        break;
+                    }
+                }
+
+                rowSaveQueueMap.delete(queueKey);
+                return ok;
+            })();
+
+            rowSaveQueueMap.set(queueKey, entry);
+            return entry.promise;
+        }
+
+        async function maybeAutosaveRows(rows) {
+            if (!autosaveInput?.checked) return;
+
+            let ok = true;
+
+            for (const row of rows) {
+                if (!row || isEmptySpareRow(row) || !hasDraftData(row)) continue;
+                const saved = await queueRowSave(row);
+                if (!saved) ok = false;
+            }
+
+            setSaveState(ok ? 'Autosave al dia' : 'Error al guardar cambios', ok ? 'success' : 'error');
+            updateGridMeta();
+        }
+
+        async function refreshTabla() {
+            setSaveState('Sincronizando tabla...', 'saving');
+
+            const response = await fetch(`/admin/pruebas/listarPruebasAjax?id_nota=${encodeURIComponent(ID_NOTA)}&id_tienda=${encodeURIComponent(ID_TIENDA)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin'
+            });
+
+            const json = await response.json();
+
+            if (!json?.ok || !Array.isArray(json.data)) {
+                setSaveState('No se pudo sincronizar', 'error');
+                return false;
+            }
+
+            nextDraftId = 1;
+            const rows = json.data.map((row) => normalizeRow(row));
+            rows.push(createBlankRow());
+            await table.replaceData(rows);
+            updateGridMeta();
+            setSaveState('Tabla actualizada', 'success');
+            return true;
+        }
+
+        async function guardarNuevasFilas(button) {
+            button?.setAttribute('disabled', 'disabled');
+            button?.insertAdjacentHTML('afterbegin', '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>');
+            setSaveState('Guardando filas nuevas...', 'saving');
+
+            let ok = true;
+            const rows = table.getData().filter((row) => row && !row.id && hasDraftData(row));
+
+            for (const row of rows) {
+                const saved = await queueRowSave(row);
+                if (!saved) ok = false;
+            }
+
+            if (ok) {
+                await refreshTabla();
+            }
+
+            button?.removeAttribute('disabled');
+            button?.querySelector('.spinner-border')?.remove();
+            showToast(ok ? 'success' : 'error', ok ? 'Filas nuevas guardadas.' : 'No se pudieron guardar todas las filas.');
+            setSaveState(ok ? 'Guardado completado' : 'Hay filas pendientes de revisar', ok ? 'success' : 'error');
+        }
+
+        async function ensureRowAtPosition(position) {
+            let rows = table.getRows();
+
+            while (rows.length <= position) {
+                await table.addRow(createBlankRow(), false);
+                rows = table.getRows();
+            }
+
+            return rows[position];
+        }
+
+        async function applyPastedMatrix(text) {
+            if (!activeCell) return;
+
+            const startField = activeCell.getField();
+            const startColumnIndex = editableFields.indexOf(startField);
+            if (startColumnIndex === -1) return;
+
+            const rows = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+            if (rows.length && rows[rows.length - 1] === '') rows.pop();
+            if (!rows.length) return;
+
+            const rowComponents = table.getRows();
+            const startRowIndex = rowComponents.findIndex((rowComponent) => rowComponent.getIndex() === activeCell.getRow().getIndex());
+            if (startRowIndex === -1) return;
+
+            const touchedRows = [];
+
+            for (let rowOffset = 0; rowOffset < rows.length; rowOffset += 1) {
+                const values = rows[rowOffset].split('\t');
+                const rowComponent = await ensureRowAtPosition(startRowIndex + rowOffset);
+                const rowData = rowComponent.getData();
+
+                for (let columnOffset = 0; columnOffset < values.length; columnOffset += 1) {
+                    const field = editableFields[startColumnIndex + columnOffset];
+                    if (!field) break;
+                    rowData[field] = values[columnOffset];
+                }
+
+                recalcRowData(rowData);
+                await rowComponent.update(rowData);
+                touchedRows.push(rowData);
+            }
+
+            await syncTrailingBlankRow();
+            updateGridMeta();
+
+            if (autosaveInput?.checked) {
+                setSaveState('Guardando filas pegadas...', 'saving');
+                await maybeAutosaveRows(touchedRows);
+            }
+
+            showToast('success', 'Pega realizada correctamente.');
+        }
+
+        async function handleCellEdited(cell) {
+            activeCell = cell;
+            gridFocused = true;
+
+            const rowComponent = cell.getRow();
+            const rowData = rowComponent.getData();
+            recalcRowData(rowData);
+            await rowComponent.update(rowData);
+            await syncTrailingBlankRow();
+            updateGridMeta();
+
+            if (editableFields.includes(cell.getField())) {
+                setSaveState('Guardando cambios...', 'saving');
+                await maybeAutosaveRows([rowData]);
+            }
+        }
+
+        async function handleDeleteRow(rowComponent) {
+            const rowData = rowComponent.getData();
+
+            if (!rowData?.id) {
+                await rowComponent.delete();
+                await syncTrailingBlankRow();
+                updateGridMeta();
+                setSaveState('Fila temporal eliminada', 'success');
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Eliminar fila',
+                text: 'Esta accion eliminara el registro de forma definitiva.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Si, eliminar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#b91c1c',
+                backdrop: false
+            });
+
+            if (!result.isConfirmed) return;
+
+            const fd = new FormData();
+            fd.append('id_nota', ID_NOTA ?? rowData.codigo_nota_pedido ?? '');
+            fd.append('id', rowData.id);
+            setSaveState('Eliminando fila...', 'saving');
+
+            try {
+                const response = await fetch('/admin/eliminarCarrito', {
+                    method: 'POST',
+                    body: fd,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                let json = null;
+
+                try {
+                    json = await response.json();
+                } catch (error) {
+                    json = null;
+                }
+
+                if (!json?.ok) {
+                    showToast('error', 'No se pudo eliminar el registro.');
+                    setSaveState('Error al eliminar', 'error');
+                    return;
+                }
+
+                await rowComponent.delete();
+                await syncTrailingBlankRow();
+                updateGridMeta();
+                showToast('success', 'Registro eliminado.');
+                setSaveState('Fila eliminada', 'success');
+            } catch (error) {
+                showToast('error', 'Error de red al eliminar.');
+                setSaveState('Error al eliminar', 'error');
+            }
+        }
+
+        const initialRows = existentes.map((row) => normalizeRow(row));
+        initialRows.push(createBlankRow());
+
+        table = new Tabulator(container, {
+            data: initialRows,
+            index: '_rowKey',
+            layout: 'fitColumns',
+            height: '100%',
+            placeholder: 'Sin registros cargados',
+            columns: [
+                { title: '#', formatter: 'rownum', width: 54, hozAlign: 'center', headerSort: false, editor: false, frozen: true },
+                { title: 'id', field: 'id', width: 74, hozAlign: 'center', headerSort: false, formatter: (cell) => `<span class="text-mono">${cell.getValue() || ''}</span>` },
+                { title: 'cod', field: 'codigo_nota_pedido', width: 92, headerSort: false },
+                { title: 'cantid', field: 'cantidad', editor: 'number', hozAlign: 'right', headerSort: false, formatter: (cell) => formatNumberCell(cell, 0) },
+                { title: 'etq', field: 'etiqueta', editor: 'input', headerSort: false },
+                { title: 'saldo', field: 'saldo', hozAlign: 'right', headerSort: false, formatter: (cell) => formatNumberCell(cell, 2) },
+                { title: 'num_fact', field: 'num_factura', editor: 'input', headerSort: false },
+                { title: 'prenda', field: 'prenda', editor: 'input', headerSort: false },
+                { title: 'composicion', field: 'composicion', editor: 'input', headerSort: false },
+                { title: 'precio_u', field: 'precio_unitario', editor: 'number', hozAlign: 'right', headerSort: false, formatter: (cell) => formatNumberCell(cell, 2) },
+                { title: 'tienda', field: 'tienda', editor: 'input', headerSort: false },
+                { title: 'marca', field: 'marca', editor: 'input', headerSort: false },
+                { title: 'pais', field: 'pais', editor: 'input', headerSort: false },
+                { title: 'num_caja', field: 'num_caja', editor: 'input', headerSort: false },
+                { title: 'bodega', field: 'bodega', editor: 'input', headerSort: false },
+                { title: 'total', field: 'total', hozAlign: 'right', headerSort: false, formatter: (cell) => formatNumberCell(cell, 2) },
+                {
+                    title: 'Acciones',
+                    field: '_actions',
+                    width: 136,
+                    hozAlign: 'center',
+                    headerSort: false,
+                    formatter: () => '<button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash me-1"></i>Eliminar</button>',
+                    cellClick: (_event, cell) => {
+                        handleDeleteRow(cell.getRow());
+                    }
+                }
+            ],
+            cellClick: (_event, cell) => {
+                activeCell = cell;
+                gridFocused = true;
+            },
+            cellEditing: (cell) => {
+                activeCell = cell;
+                gridFocused = true;
+            },
+            cellEdited: (cell) => {
+                handleCellEdited(cell);
+            }
+        });
+
+        syncTrailingBlankRow().then(updateGridMeta);
+
+        document.addEventListener('click', (event) => {
+            if (!container.contains(event.target)) {
+                gridFocused = false;
+            }
+        });
+
+        document.addEventListener('paste', (event) => {
+            const text = event.clipboardData?.getData('text/plain') || '';
+            const tagName = (event.target?.tagName || '').toLowerCase();
+            const isEditorInput = tagName === 'input' || tagName === 'textarea' || event.target?.isContentEditable;
+
+            if (!gridFocused || !activeCell || !text || isEditorInput || (!text.includes('\t') && !text.includes('\n'))) {
+                return;
+            }
+
+            event.preventDefault();
+            applyPastedMatrix(text);
+        });
+
+        document.getElementById('guardar-nuevas')?.addEventListener('click', (event) => {
+            guardarNuevasFilas(event.currentTarget);
+        });
+
+        document.getElementById('recargar')?.addEventListener('click', () => {
+            refreshTabla();
+        });
+    });
+</script>
+<script>
     function bloquearBoton(form) {
         const btn = form.querySelector('button[type="submit"]');
         if (btn) {
