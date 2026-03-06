@@ -399,17 +399,24 @@ class PruebasController
     public static function eliminarCarrito()
     {
         session_start();
-        if (!isset($_SESSION['email'])) {
-            header('Location: /');
-            exit;
-        }
-
         $id_nota = $_GET['id'] ?? ($_POST['id_nota'] ?? null);
 
         // AJAX/JSON
         $isAjax      = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         $acceptsJson = isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json');
         $wantsJson   = $isAjax || $acceptsJson;
+
+        if (!isset($_SESSION['email'])) {
+            if ($wantsJson) {
+                http_response_code(401);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['ok' => false, 'error' => 'no-auth'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            header('Location: /');
+            exit;
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? null;
@@ -635,6 +642,75 @@ class PruebasController
         }
 
         echo json_encode(['ok' => true, 'id' => $carrito->id], JSON_UNESCAPED_UNICODE);
+    }
+
+    public static function listarPruebasAjax()
+    {
+        session_start();
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (!isset($_SESSION['email'])) {
+            http_response_code(401);
+            echo json_encode(['ok' => false, 'error' => 'no-auth'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            http_response_code(405);
+            echo json_encode(['ok' => false, 'error' => 'bad-method'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $idNota = $_GET['id_nota'] ?? null;
+        $idTienda = isset($_GET['id_tienda']) ? (int)$_GET['id_tienda'] : 0;
+
+        if (!$idNota || $idTienda <= 0) {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'missing-params'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $rows = Carrito2::whereArray([
+            'Codigo_Nota_Pedido' => $idNota,
+            'id_tienda' => $idTienda,
+        ]);
+
+        $data = [];
+
+        foreach ($rows as $row) {
+            $data[] = self::serializeCarrito2Row($row);
+        }
+
+        usort($data, static function ($left, $right) {
+            return ((int)($left['id'] ?? 0)) <=> ((int)($right['id'] ?? 0));
+        });
+
+        echo json_encode(['ok' => true, 'data' => $data], JSON_UNESCAPED_UNICODE);
+    }
+
+    private static function serializeCarrito2Row($row): array
+    {
+        $cantidad = isset($row->cantidad) ? (float)$row->cantidad : 0.0;
+        $precio = isset($row->precio_unitario) ? (float)$row->precio_unitario : 0.0;
+
+        return [
+            'id' => (int)($row->id ?? 0),
+            'codigo_nota_pedido' => $row->Codigo_Nota_Pedido ?? '',
+            'etiqueta' => $row->etiqueta ?? '',
+            'prenda' => $row->prenda ?? '',
+            'saldo' => isset($row->saldo) ? (float)$row->saldo : 0.0,
+            'composicion' => $row->composicion ?? '',
+            'cantidad' => $cantidad,
+            'precio_unitario' => $precio,
+            'num_factura' => $row->num_factura ?? '',
+            'tienda' => $row->tienda ?? '',
+            'marca' => $row->marca ?? '',
+            'pais' => $row->pais ?? '',
+            'num_caja' => $row->num_caja ?? '',
+            'bodega' => $row->bodega ?? '',
+            'id_tienda' => isset($row->id_tienda) ? (int)$row->id_tienda : 0,
+            'total' => round($cantidad * $precio, 2),
+        ];
     }
 
 

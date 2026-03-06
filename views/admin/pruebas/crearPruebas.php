@@ -741,6 +741,10 @@ $selIf    = function ($left, $right) {
         display: none;
     }
 
+    #hot-min .tabulator-tableholder {
+        min-height: 320px;
+    }
+
     #hot-min .tabulator-cell.tabulator-editing {
         outline: 2px solid rgba(13, 110, 253, 0.18);
         outline-offset: -2px;
@@ -1650,6 +1654,28 @@ $selIf    = function ($left, $right) {
             toastErr.show();
         }
 
+        async function fetchJson(url, options = {}) {
+            const response = await fetch(url, options);
+            const rawText = await response.text();
+
+            let json = null;
+
+            try {
+                json = rawText ? JSON.parse(rawText) : null;
+            } catch (error) {
+                console.error('Respuesta no JSON desde', url, rawText.slice(0, 240));
+                throw new Error(`invalid-json:${response.status}`);
+            }
+
+            if (!response.ok) {
+                const error = new Error(`http-${response.status}`);
+                error.payload = json;
+                throw error;
+            }
+
+            return json;
+        }
+
         function setSaveState(message, tone = 'idle') {
             if (!hotSaveState) return;
             hotSaveState.dataset.tone = tone;
@@ -1800,22 +1826,21 @@ $selIf    = function ($left, $right) {
 
             recalcRowData(row);
 
-            const response = await fetch(row.id ? '/admin/pruebas/actualizarPruebas' : '/admin/pruebas/crearPruebasAjax', {
-                method: 'POST',
-                body: buildPayload(row),
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin'
-            });
-
             let json = null;
 
             try {
-                json = await response.json();
+                json = await fetchJson(row.id ? '/admin/pruebas/actualizarPruebas' : '/admin/pruebas/crearPruebasAjax', {
+                    method: 'POST',
+                    body: buildPayload(row),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
             } catch (error) {
-                json = null;
+                console.warn('saveOrUpdateFila network/json error:', error);
+                return false;
             }
 
             if (!json?.ok) {
@@ -1892,16 +1917,21 @@ $selIf    = function ($left, $right) {
 
         async function refreshTabla() {
             setSaveState('Sincronizando tabla...', 'saving');
+            let json = null;
 
-            const response = await fetch(`/admin/pruebas/listarPruebasAjax?id_nota=${encodeURIComponent(ID_NOTA)}&id_tienda=${encodeURIComponent(ID_TIENDA)}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin'
-            });
-
-            const json = await response.json();
+            try {
+                json = await fetchJson(`/admin/pruebas/listarPruebasAjax?id_nota=${encodeURIComponent(ID_NOTA)}&id_tienda=${encodeURIComponent(ID_TIENDA)}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
+            } catch (error) {
+                setSaveState('No se pudo sincronizar', 'error');
+                console.warn('refreshTabla error:', error);
+                return false;
+            }
 
             if (!json?.ok || !Array.isArray(json.data)) {
                 setSaveState('No se pudo sincronizar', 'error');
@@ -2042,7 +2072,7 @@ $selIf    = function ($left, $right) {
             setSaveState('Eliminando fila...', 'saving');
 
             try {
-                const response = await fetch('/admin/eliminarCarrito', {
+                const json = await fetchJson('/admin/eliminarCarrito', {
                     method: 'POST',
                     body: fd,
                     headers: {
@@ -2051,14 +2081,6 @@ $selIf    = function ($left, $right) {
                     },
                     credentials: 'same-origin'
                 });
-
-                let json = null;
-
-                try {
-                    json = await response.json();
-                } catch (error) {
-                    json = null;
-                }
 
                 if (!json?.ok) {
                     showToast('error', 'No se pudo eliminar el registro.');
@@ -2083,9 +2105,14 @@ $selIf    = function ($left, $right) {
         table = new Tabulator(container, {
             data: initialRows,
             index: '_rowKey',
-            layout: 'fitColumns',
+            layout: 'fitDataStretch',
             height: '100%',
             placeholder: 'Sin registros cargados',
+            columnDefaults: {
+                minWidth: 96,
+                resizable: true,
+                vertAlign: 'middle',
+            },
             columns: [
                 { title: '#', formatter: 'rownum', width: 54, hozAlign: 'center', headerSort: false, editor: false, frozen: true },
                 { title: 'id', field: 'id', width: 74, hozAlign: 'center', headerSort: false, formatter: (cell) => `<span class="text-mono">${cell.getValue() || ''}</span>` },
@@ -2128,7 +2155,10 @@ $selIf    = function ($left, $right) {
             }
         });
 
-        syncTrailingBlankRow().then(updateGridMeta);
+        table.on('tableBuilt', async () => {
+            await syncTrailingBlankRow();
+            updateGridMeta();
+        });
 
         document.addEventListener('click', (event) => {
             if (!container.contains(event.target)) {

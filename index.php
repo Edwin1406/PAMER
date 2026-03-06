@@ -172,6 +172,7 @@ $router->post('/admin/pruebas/crearPruebas', [PruebasController::class, 'crearPr
 
 // crearPruebasAjax
 $router->post('/admin/pruebas/crearPruebasAjax', [PruebasController::class, 'crearPruebasAjax']);
+$router->get('/admin/pruebas/listarPruebasAjax', [PruebasController::class, 'listarPruebasAjax']);
 
 // CREAR PRENDA
 $router->post('/admin/prenda/crearPrenda', [PruebasController::class, 'crearPrenda']);
