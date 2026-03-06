@@ -695,7 +695,6 @@ $selIf    = function ($left, $right) {
 <!-- ====== Bootstrap 5 & Icons ====== -->
 <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"> -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- ====== Handsontable ====== -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.css">
@@ -703,87 +702,168 @@ $selIf    = function ($left, $right) {
 
 <style>
     .hot-card {
-        border: 1px solid #e9ecef;
-        box-shadow: 0 6px 24px rgba(33, 37, 41, .06);
-        border-radius: 1rem;
-        overflow: hidden
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+        border-radius: 1.25rem;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.9);
     }
 
     .hot-toolbar .btn {
-        border-radius: .6rem
+        border-radius: .85rem;
     }
 
     #hot-min {
-        height: clamp(160px, 60vh, 99940px) !important;
+        height: clamp(240px, 58vh, 820px) !important;
     }
 
     .handsontable th,
     .handsontable td {
-        font-size: .95rem;
+        font-size: .92rem;
         white-space: nowrap;
     }
 
     .handsontable .ht_clone_top th,
     .handsontable .ht_clone_top td {
-        background-color: #f8f9fa
+        background-color: #f8fafc;
     }
 
     .hot-badge {
         font-size: .7rem;
-        letter-spacing: .02em
+        letter-spacing: .02em;
     }
 
     .text-mono {
         font-variant-numeric: tabular-nums;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .hot-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .hot-meta {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        flex-wrap: wrap;
+        margin-top: .7rem;
+    }
+
+    .hot-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2rem;
+        padding: 0 .8rem;
+        border-radius: 999px;
+        background: rgba(15, 118, 110, 0.08);
+        color: #115e59;
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
+    .hot-pill--soft {
+        background: rgba(15, 23, 42, 0.05);
+        color: #475569;
+    }
+
+    .hot-status {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: .88rem;
+        color: #475569;
+        font-weight: 600;
+    }
+
+    .hot-status::before {
+        content: "";
+        width: .65rem;
+        height: .65rem;
+        border-radius: 999px;
+        background: #94a3b8;
+        box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.18);
+    }
+
+    .hot-status[data-tone="saving"]::before {
+        background: #f59e0b;
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.16);
+    }
+
+    .hot-status[data-tone="success"]::before {
+        background: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.16);
+    }
+
+    .hot-status[data-tone="error"]::before {
+        background: #ef4444;
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.16);
+    }
+
+    .hot-toolbar {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .hot-grid-shell {
+        padding: .85rem 1rem 1rem;
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(241, 245, 249, 0.95));
+    }
+
+    .hot-empty-note {
+        margin-top: .75rem;
+        color: #64748b;
+        font-size: .87rem;
+    }
+
+    @media (max-width: 768px) {
+        .hot-toolbar {
+            justify-content: flex-start;
+        }
     }
 </style>
 
 <div class="container-xxl my-4">
     <div class="hot-card">
         <div class="p-3 p-md-4 border-bottom bg-white">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="hot-header">
                 <div>
                     <h5 class="mb-1 d-flex align-items-center gap-2">
                         Administrar prendas para Nota de Pedido N° <?= htmlspecialchars($id_nota) ?>
-                        <span class="badge text-bg-light hot-badge">Handsontable</span>
+                        <span class="badge text-bg-light hot-badge">Editor tabular</span>
                     </h5>
                     <div class="text-secondary small">Pega desde Excel: selecciona A1 y usa <kbd>Ctrl/⌘ + V</kbd></div>
+                    <div class="hot-meta">
+                        <span id="hotRowCount" class="hot-pill">0 registros</span>
+                        <span class="hot-pill hot-pill--soft">Sin recarga completa</span>
+                        <span id="hotSaveState" class="hot-status" data-tone="idle">Listo para editar</span>
+                    </div>
                 </div>
-                <div class="hot-toolbar d-flex align-items-center gap-2">
+                <div class="hot-toolbar">
                     <div class="form-check form-switch me-2">
                         <input class="form-check-input" type="checkbox" id="autosave" checked>
-                        <label class="form-check-label small" for="autosave">Autosave al pegar/editar</label>
+                        <label class="form-check-label small" for="autosave">Autosave al pegar y editar</label>
                     </div>
                     <button id="guardar-nuevas" class="btn btn-primary">
-                        <i class="bi bi-save me-1"></i> Guardar <span class="d-none d-sm-inline">NUEVAS filas</span>
+                        <i class="bi bi-save me-1"></i> Guardar filas nuevas
                     </button>
-                    <button id="recargar" class="btn btn-outline-secondary"><i class="bi bi-arrow-repeat me-1"></i> Recargar</button>
+                    <button id="recargar" class="btn btn-outline-secondary"><i class="bi bi-arrow-repeat me-1"></i> Sincronizar</button>
                 </div>
             </div>
         </div>
 
-        <div class="p-2 p-md-3 bg-light-subtle">
+        <div class="hot-grid-shell">
             <div class="table-responsive">
                 <div id="hot-min" class="bg-white rounded-3"></div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal eliminar -->
-<div class="modal fade" id="modalConfirmDelete" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h6 class="modal-title"><i class="bi bi-exclamation-triangle text-danger me-2"></i> Confirmar eliminación</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body pt-0">¿Eliminar este registro definitivamente?</div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" id="btnConfirmDelete" class="btn btn-danger"><i class="bi bi-trash me-1"></i> Eliminar</button>
-            </div>
+            <div class="hot-empty-note">Usa la última fila vacía para agregar nuevos registros. La columna de acciones elimina filas sin salir de esta pantalla.</div>
         </div>
     </div>
 </div>
@@ -792,13 +872,13 @@ $selIf    = function ($left, $right) {
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080">
     <div id="toastOk" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
-            <div class="toast-body"><i class="bi bi-check-circle me-2"></i> Operación realizada.</div>
+            <div id="toastOkBody" class="toast-body"><i class="bi bi-check-circle me-2"></i> Operación realizada.</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     </div>
     <div id="toastErr" class="toast align-items-center text-bg-danger border-0 mt-2" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
-            <div class="toast-body"><i class="bi bi-x-circle me-2"></i> No se pudo procesar.</div>
+            <div id="toastErrBody" class="toast-body"><i class="bi bi-x-circle me-2"></i> No se pudo procesar.</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     </div>
@@ -816,8 +896,6 @@ $selIf    = function ($left, $right) {
     const pais = <?= json_encode($tienda_nota->pais ?? '') ?>;
     const ciudad = <?= json_encode($tienda_nota->ciudad ?? '') ?>;
     const num_factura = <?= json_encode($tienda_nota->num_factura ?? '') ?>;
-
-    console.log(num_factura)
 
     const ID_TIENDA = <?= json_encode($_GET['id'] ?? '') ?>;
 
@@ -861,11 +939,36 @@ $selIf    = function ($left, $right) {
     const toastErr = new bootstrap.Toast(document.getElementById('toastErr'), {
         delay: 2600
     });
-    const modalDelete = new bootstrap.Modal(document.getElementById('modalConfirmDelete'));
-    let rowPendingDelete = null;
+    const hotRowCount = document.getElementById('hotRowCount');
+    const hotSaveState = document.getElementById('hotSaveState');
+    const toastOkBody = document.getElementById('toastOkBody');
+    const toastErrBody = document.getElementById('toastErrBody');
 
     function round(n) {
         return Math.round((n + Number.EPSILON) * 100) / 100;
+    }
+
+    function showToast(type, message) {
+        if (type === 'success') {
+            if (toastOkBody) toastOkBody.innerHTML = `<i class="bi bi-check-circle me-2"></i>${message}`;
+            toastOk.show();
+            return;
+        }
+
+        if (toastErrBody) toastErrBody.innerHTML = `<i class="bi bi-x-circle me-2"></i>${message}`;
+        toastErr.show();
+    }
+
+    function setSaveState(message, tone = 'idle') {
+        if (!hotSaveState) return;
+        hotSaveState.dataset.tone = tone;
+        hotSaveState.textContent = message;
+    }
+
+    function updateGridMeta() {
+        if (!hotRowCount) return;
+        const rows = hot.getSourceData().filter(r => r && (r.id || hasKeyData(r))).length;
+        hotRowCount.textContent = `${rows} registro${rows === 1 ? '' : 's'}`;
     }
 
     // ---------- Handsontable ----------
@@ -1050,9 +1153,11 @@ $selIf    = function ($left, $right) {
                 rowsToUpdate.add(row);
             }
             if (rowsToUpdate.size) {
+                setSaveState('Guardando cambios...', 'saving');
                 rowsToUpdate.forEach(r => recalcRow(r));
                 maybeAutosave([...rowsToUpdate]);
             }
+            updateGridMeta();
         },
 
         // afterPaste(){
@@ -1067,18 +1172,14 @@ $selIf    = function ($left, $right) {
 
             // si autosave está activado, guardo primero y luego recargo
             if (document.getElementById('autosave')?.checked) {
+                setSaveState('Guardando filas pegadas...', 'saving');
                 await maybeAutosave([...Array(len).keys()]);
+                await refreshTabla();
             }
 
-
-            Swal.fire({
-                title: 'Pega realizada',
-                text: 'Los datos han sido pegados correctamente.',
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-            setTimeout(() => location.reload(), 1000);
-            // recarga total 1 segundo después (ajusta si quieres)
+            showToast('success', 'Pega realizada correctamente.');
+            setSaveState('Cambios sincronizados', 'success');
+            updateGridMeta();
         }
 
 
@@ -1088,6 +1189,8 @@ $selIf    = function ($left, $right) {
     window.addEventListener('resize', () => hot.updateSettings({
         height: container.clientHeight
     }));
+
+    updateGridMeta();
 
     function recalcRow(rowIndex) {
         const r = hot.getSourceDataAtRow(rowIndex);
@@ -1181,6 +1284,7 @@ $selIf    = function ($left, $right) {
     }
 
     async function refreshTabla() {
+        setSaveState('Sincronizando tabla...', 'saving');
         const resp = await fetch(`/admin/pruebas/listarPruebasAjax?id_nota=${encodeURIComponent(ID_NOTA)}&id_tienda=${encodeURIComponent(ID_TIENDA)}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -1193,7 +1297,13 @@ $selIf    = function ($left, $right) {
         if (json?.ok && Array.isArray(json.data)) {
             hot.loadData(json.data);
             hot.render();
+            updateGridMeta();
+            setSaveState('Tabla actualizada', 'success');
+            return true;
         }
+
+        setSaveState('No se pudo sincronizar', 'error');
+        return false;
     }
 
 
@@ -1203,6 +1313,7 @@ $selIf    = function ($left, $right) {
         btn?.insertAdjacentHTML('afterbegin',
             '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>'
         );
+        setSaveState('Guardando filas nuevas...', 'saving');
 
         const nuevas = filasNuevas();
         let ok = true;
@@ -1210,16 +1321,17 @@ $selIf    = function ($left, $right) {
         for (const r of nuevas) {
             recalcRow(hot.getSourceData().indexOf(r));
             const exito = await saveOrUpdateFila(r);
-            //   if (!exito) ok = false;
-            // refreshTabla();
-            refreshTabla().then(() => {
-                console.log("Tabla actualizada después de guardar una nueva fila.");
-            });
+            if (!exito) ok = false;
+        }
+
+        if (ok) {
+            await refreshTabla();
         }
 
         btn?.removeAttribute('disabled');
         btn?.querySelector('.spinner-border')?.remove();
-        ok ? toastOk.show() : toastErr.show();
+        ok ? showToast('success', 'Filas nuevas guardadas.') : showToast('error', 'No se pudieron guardar todas las filas.');
+        setSaveState(ok ? 'Guardado completado' : 'Hay filas pendientes de revisar', ok ? 'success' : 'error');
     }
 
     async function maybeAutosave(rowIdxList) {
@@ -1239,7 +1351,8 @@ $selIf    = function ($left, $right) {
             if (!exito) ok = false;
         }
 
-        ok ? toastOk.show() : toastErr.show();
+        setSaveState(ok ? 'Autosave al día' : 'Error al guardar cambios', ok ? 'success' : 'error');
+        updateGridMeta();
     }
 
     document.getElementById('guardar-nuevas')?.addEventListener('click', (e) => guardarNuevasFilas(e.currentTarget));
@@ -1254,56 +1367,58 @@ $selIf    = function ($left, $right) {
 
         if (!rowData?.id) {
             hot.alter('remove_row', rowIndex, 1);
+            updateGridMeta();
+            setSaveState('Fila temporal eliminada', 'success');
             return;
         }
-        rowPendingDelete = {
-            rowIndex,
-            rowData
-        };
-        modalDelete.show();
-    });
 
-    document.getElementById('btnConfirmDelete')?.addEventListener('click', async () => {
-        const info = rowPendingDelete;
-        rowPendingDelete = null;
-        if (!info) return;
+        Swal.fire({
+            title: 'Eliminar fila',
+            text: 'Esta acción eliminará el registro de forma definitiva.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#b91c1c',
+            backdrop: false
+        }).then(async (result) => {
+            if (!result.isConfirmed) return;
 
-        const {
-            rowIndex,
-            rowData
-        } = info;
+            const fd = new FormData();
+            fd.append('id_nota', ID_NOTA ?? rowData.codigo_nota_pedido ?? '');
+            fd.append('id', rowData.id);
+            setSaveState('Eliminando fila...', 'saving');
 
-        const fd = new FormData();
-        fd.append('id_nota', ID_NOTA ?? rowData.codigo_nota_pedido ?? '');
-        fd.append('id', rowData.id);
-
-        try {
-            const resp = await fetch('/admin/eliminarCarrito', {
-                method: 'POST',
-                body: fd,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin'
-            });
-
-            let json = null;
             try {
-                json = await resp.json();
-            } catch {}
+                const resp = await fetch('/admin/eliminarCarrito', {
+                    method: 'POST',
+                    body: fd,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
 
-            if (json?.ok) {
-                hot.alter('remove_row', rowIndex, 1);
-                toastOk.show();
-            } else {
-                toastErr.show();
+                let json = null;
+                try {
+                    json = await resp.json();
+                } catch {}
+
+                if (json?.ok) {
+                    hot.alter('remove_row', rowIndex, 1);
+                    updateGridMeta();
+                    showToast('success', 'Registro eliminado.');
+                    setSaveState('Fila eliminada', 'success');
+                } else {
+                    showToast('error', 'No se pudo eliminar el registro.');
+                    setSaveState('Error al eliminar', 'error');
+                }
+            } catch {
+                showToast('error', 'Error de red al eliminar.');
+                setSaveState('Error al eliminar', 'error');
             }
-        } catch {
-            toastErr.show();
-        } finally {
-            modalDelete.hide();
-        }
+        });
     });
 </script>
 
