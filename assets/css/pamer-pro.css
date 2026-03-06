@@ -23,9 +23,13 @@ body {
   min-height: 100%;
 }
 
+html {
+  font-size: 13px;
+}
+
 body {
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 13px;
+  font-size: 1rem;
   line-height: 1.45;
   color: var(--pamer-text);
   background:
@@ -413,6 +417,12 @@ html.sidebar-pref-collapsed #main.app-main {
   justify-content: center;
   background: linear-gradient(135deg, rgba(20, 184, 166, 0.12), rgba(59, 130, 246, 0.12));
   color: #0f172a;
+}
+
+@media (min-width: 1200px) {
+  .admin-topbar .burger-btn {
+    display: inline-flex !important;
+  }
 }
 
 .burger-btn i {

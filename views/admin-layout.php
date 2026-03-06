@@ -25,7 +25,7 @@ $initial = strtoupper(function_exists('mb_substr') ? mb_substr($userName, 0, 1) 
     <div id="main" class="app-main">
         <header class="admin-topbar">
             <div class="admin-topbar__mobile">
-                <a href="#" class="burger-btn d-block d-xl-none" aria-label="Abrir menu lateral">
+                <a href="#" class="burger-btn" aria-label="Abrir menu lateral">
                     <i class="bi bi-list"></i>
                 </a>
                 <div class="admin-topbar__copy">

@@ -156,9 +156,9 @@ window.addEventListener('resize', () => {
 });
 
 // Burger menu button
-const burgerBtn = document.querySelector('.burger-btn');
-if (burgerBtn) {
-    burgerBtn.addEventListener('click', () => {
+document.querySelectorAll('.burger-btn').forEach((burgerBtn) => {
+    burgerBtn.addEventListener('click', (event) => {
+        event.preventDefault();
         const app = document.getElementById('app');
         if (window.innerWidth >= 1200 && app) {
             setSidebarCollapsed(!app.classList.contains('sidebar-collapsed'));
@@ -167,12 +167,12 @@ if (burgerBtn) {
         const sidebar = document.getElementById('sidebar');
         setSidebarCollapsed(sidebar ? sidebar.classList.contains('active') : true);
     });
-}
+});
 
 // Sidebar hide button
-const sidebarHide = document.querySelector('.sidebar-hide');
-if (sidebarHide) {
-    sidebarHide.addEventListener('click', () => {
+document.querySelectorAll('.sidebar-hide').forEach((sidebarHide) => {
+    sidebarHide.addEventListener('click', (event) => {
+        event.preventDefault();
         const app = document.getElementById('app');
         if (window.innerWidth >= 1200 && app) {
             setSidebarCollapsed(true);
@@ -180,7 +180,7 @@ if (sidebarHide) {
         }
         setSidebarCollapsed(true);
     });
-}
+});
 
 // Perfect Scrollbar Init
 if (typeof PerfectScrollbar === 'function') {
