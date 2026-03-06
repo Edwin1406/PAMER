@@ -103,6 +103,14 @@ function saveSidebarState(state) {
     }
 }
 
+function emitSidebarStateChange(collapsed) {
+    window.dispatchEvent(new CustomEvent('pamer:sidebar-change', {
+        detail: {
+            collapsed: !!collapsed
+        }
+    }));
+}
+
 function applySidebarState() {
     const sidebar = document.getElementById('sidebar');
     const app = document.getElementById('app');
@@ -117,11 +125,13 @@ function applySidebarState() {
     if (isDesktop) {
         sidebar.classList.add('active');
         app.classList.toggle('sidebar-collapsed', shouldCollapse);
+        emitSidebarStateChange(shouldCollapse);
         return;
     }
 
     app.classList.remove('sidebar-collapsed');
     sidebar.classList.toggle('active', !shouldCollapse);
+    emitSidebarStateChange(shouldCollapse);
 }
 
 function setSidebarCollapsed(collapsed) {
@@ -136,11 +146,13 @@ function setSidebarCollapsed(collapsed) {
     if (isDesktop) {
         sidebar.classList.add('active');
         app.classList.toggle('sidebar-collapsed', collapsed);
+        emitSidebarStateChange(collapsed);
         return;
     }
 
     app.classList.remove('sidebar-collapsed');
     sidebar.classList.toggle('active', !collapsed);
+    emitSidebarStateChange(collapsed);
 }
 
 window.addEventListener('DOMContentLoaded', () => {

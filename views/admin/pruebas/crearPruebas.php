@@ -855,7 +855,7 @@ $selIf    = function ($left, $right) {
     }
 </style>
 
-<div class="container-xxl my-4">
+<section class="section">
     <div class="hot-card">
         <div class="p-3 p-md-4 border-bottom bg-white">
             <div class="hot-header">
@@ -891,7 +891,7 @@ $selIf    = function ($left, $right) {
             <div class="hot-empty-note">Usa la ultima fila vacia para agregar nuevos registros. Tambien puedes pegar rangos desde Excel y se llenaran desde la celda activa.</div>
         </div>
     </div>
-</div>
+</section>
 
 <!-- Toasts -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080">
@@ -2326,6 +2326,16 @@ $selIf    = function ($left, $right) {
             updateGridMeta();
         });
 
+        const redrawTabulator = () => {
+            if (!table) return;
+            window.requestAnimationFrame(() => {
+                table.redraw(true);
+            });
+        };
+
+        window.addEventListener('pamer:sidebar-change', redrawTabulator);
+        window.addEventListener('resize', redrawTabulator);
+
         document.addEventListener('click', (event) => {
             if (!container.contains(event.target)) {
                 gridFocused = false;
@@ -2380,10 +2390,8 @@ $selIf    = function ($left, $right) {
             <form action="/admin/pruebas/registrarVenta" method="POST">
                 <!-- Fila 1 -->
 
-                <div class="row">
-                    <section id="basic-vertical-layouts">
-                        <div class="row match-height g-4">
-                            <div class="col-lg-6 col-12">
+                <div class="row g-4">
+                    <div class="col-lg-6 col-12">
                                 <div class="card" style="background-color: #dacdcdff;">
                                     <div class="card-content">
                                         <div class="card-body">
@@ -2426,8 +2434,8 @@ $selIf    = function ($left, $right) {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-lg-6 col-12">
+                    </div>
+                    <div class="col-lg-6 col-12">
                                 <div class="card" style="background-color: #dacdcdff;">
 
                                     <div class="card-content">
@@ -2500,9 +2508,7 @@ $selIf    = function ($left, $right) {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </section>
+                    </div>
                     <div class="col-12 d-flex justify-content-end">
                         <button type="submit" id="btnRegistrar" class="btn btn-primary me-1 mb-1">Registrar</button>
 
