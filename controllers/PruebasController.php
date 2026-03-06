@@ -1272,12 +1272,12 @@ class PruebasController
 
         $pdf->SetDrawColor(226, 232, 240);
         $pdf->SetFillColor(255, 255, 255);
-        $pdf->RoundedRect(10, $pdf->GetY(), 190, 37, 4, '1111', 'DF');
+        $pdf->RoundedRect(10, $pdf->GetY(), 190, 39, 4, '1111', 'DF');
 
         $pdf->Ln(3);
         self::renderMetaRowPro($pdf, $leftW, $rightW, 'Importador', (string)$nota->Codigo_Importador, 'Fecha', (string)$nota->Fecha_Nota_Pedido, $rowH);
-        self::renderMetaRowPro($pdf, $leftW, $rightW, 'Exportador', (string)$nota->Codigo_Exportador, 'Pais / Origen', (string)$nota->Pais_Nota_Pedido, $rowH);
-        self::renderMetaRowPro($pdf, $leftW, $rightW, 'Remitir documentos a', (string)$nota->Remitir_Nota_Pedido, 'Forma de pago', (string)$nota->Forma_Pago_Nota_Pedido, $rowH);
+        self::renderMetaRowPro($pdf, $leftW, $rightW, 'Exportador', (string)$nota->Codigo_Exportador, 'Pais origen', (string)$nota->Pais_Nota_Pedido, $rowH);
+        self::renderMetaRowPro($pdf, $leftW, $rightW, 'Remitir a', (string)$nota->Remitir_Nota_Pedido, 'Forma de pago', (string)$nota->Forma_Pago_Nota_Pedido, $rowH);
         self::renderMetaRowPro($pdf, $leftW, $rightW, 'Moneda', (string)$nota->Moneda_Nota_Pedido, 'Numero nota', (string)$nota->Numero_Nota_Pedido, $rowH);
         $pdf->Ln(5);
     }
@@ -1286,23 +1286,25 @@ class PruebasController
     {
         $x = 14;
         $y = $pdf->GetY();
+        $leftLabelW = 24;
+        $rightLabelW = 24;
 
         $pdf->SetXY($x, $y);
-        $pdf->SetFont('helvetica', 'B', 7.2);
+        $pdf->SetFont('helvetica', 'B', 6.7);
         $pdf->SetTextColor(100, 116, 139);
-        $pdf->Cell(22, $rowH, strtoupper($leftLabel), 0, 0, 'L');
+        $pdf->Cell($leftLabelW, $rowH, strtoupper($leftLabel), 0, 0, 'L');
 
         $pdf->SetFont('helvetica', '', 9);
         $pdf->SetTextColor(15, 23, 42);
-        $pdf->Cell($leftW - 22, $rowH, trim($leftValue) !== '' ? $leftValue : '-', 0, 0, 'L');
+        $pdf->Cell($leftW - $leftLabelW, $rowH, trim($leftValue) !== '' ? $leftValue : '-', 0, 0, 'L');
 
-        $pdf->SetFont('helvetica', 'B', 7.2);
+        $pdf->SetFont('helvetica', 'B', 6.7);
         $pdf->SetTextColor(100, 116, 139);
-        $pdf->Cell(24, $rowH, strtoupper($rightLabel), 0, 0, 'L');
+        $pdf->Cell($rightLabelW, $rowH, strtoupper($rightLabel), 0, 0, 'L');
 
         $pdf->SetFont('helvetica', '', 9);
         $pdf->SetTextColor(15, 23, 42);
-        $pdf->Cell($rightW - 24, $rowH, trim($rightValue) !== '' ? $rightValue : '-', 0, 1, 'L');
+        $pdf->Cell($rightW - $rightLabelW, $rowH, trim($rightValue) !== '' ? $rightValue : '-', 0, 1, 'L');
     }
 
     private static function renderItemsTableVerticalPro(TCPDF $pdf, array $items): void
@@ -1679,7 +1681,8 @@ class PruebasController
             'caja' => 'C',
         ];
 
-        $x = $pdf->GetX();
+        $startX = $pdf->GetX();
+        $x = $startX;
         $y = $pdf->GetY();
 
         $pdf->SetFillColor($fill[0], $fill[1], $fill[2]);
@@ -1706,7 +1709,7 @@ class PruebasController
             $x += $width;
         }
 
-        $pdf->SetXY(12, $y + $height);
+        $pdf->SetXY($startX, $y + $height);
     }
 
     private static function renderPdfFooter(TCPDF $pdf): void
