@@ -2104,9 +2104,25 @@ $selIf    = function ($left, $right) {
                 });
 
                 input.addEventListener('keydown', (event) => {
-                    if (event.key === 'Enter' || event.key === 'Tab') {
+                    if (event.key === 'Enter') {
                         event.preventDefault();
                         commit();
+                        return;
+                    }
+
+                    if (event.key === 'Tab') {
+                        event.preventDefault();
+                        const movePrev = event.shiftKey;
+                        commit().then(() => {
+                            window.setTimeout(() => {
+                                if (movePrev) {
+                                    table.navigatePrev();
+                                    return;
+                                }
+
+                                table.navigateNext();
+                            }, 0);
+                        });
                         return;
                     }
 
@@ -2192,6 +2208,7 @@ $selIf    = function ($left, $right) {
             layout: 'fitDataStretch',
             height: '100%',
             placeholder: 'Sin registros cargados',
+            tabEndNewRow: () => createBlankRow(),
             columnDefaults: {
                 minWidth: 96,
                 resizable: true,
