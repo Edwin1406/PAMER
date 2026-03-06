@@ -78,6 +78,11 @@ a {
   z-index: 40;
 }
 
+html.sidebar-pref-collapsed #sidebar {
+  width: 0;
+  flex: 0 0 0;
+}
+
 #sidebar .sidebar-wrapper {
   width: var(--pamer-sidebar-width);
   height: 100vh;
@@ -89,6 +94,13 @@ a {
   flex-direction: column;
   overflow: hidden;
   transition: transform 0.28s ease, opacity 0.2s ease;
+}
+
+html.sidebar-pref-collapsed #sidebar .sidebar-wrapper {
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: none;
 }
 
 .sidebar-header {
@@ -322,6 +334,12 @@ a {
   max-width: calc(100% - var(--pamer-sidebar-width));
   padding: 18px 20px 22px 10px;
   transition: width 0.28s ease, max-width 0.28s ease, padding 0.28s ease;
+}
+
+html.sidebar-pref-collapsed #main.app-main {
+  width: 100%;
+  max-width: 100%;
+  padding-left: 20px;
 }
 
 #app.app-shell.sidebar-collapsed #sidebar {

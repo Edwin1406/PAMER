@@ -112,6 +112,8 @@ function applySidebarState() {
     const savedState = getSavedSidebarState();
     const shouldCollapse = savedState === 'collapsed';
 
+    document.documentElement.classList.toggle('sidebar-pref-collapsed', shouldCollapse);
+
     if (isDesktop) {
         sidebar.classList.add('active');
         app.classList.toggle('sidebar-collapsed', shouldCollapse);
@@ -129,6 +131,7 @@ function setSidebarCollapsed(collapsed) {
 
     const isDesktop = window.innerWidth >= 1200;
     saveSidebarState(collapsed ? 'collapsed' : 'expanded');
+    document.documentElement.classList.toggle('sidebar-pref-collapsed', collapsed);
 
     if (isDesktop) {
         sidebar.classList.add('active');
