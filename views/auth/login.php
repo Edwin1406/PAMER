@@ -1,6 +1,16 @@
 <div id="auth" class="auth-login-shell">
+    <div class="auth-galaxy" aria-hidden="true">
+        <span class="auth-galaxy__nebula auth-galaxy__nebula--one"></span>
+        <span class="auth-galaxy__nebula auth-galaxy__nebula--two"></span>
+        <span class="auth-galaxy__nebula auth-galaxy__nebula--three"></span>
+        <span class="auth-galaxy__stars"></span>
+        <span class="auth-galaxy__orbit auth-galaxy__orbit--one"></span>
+        <span class="auth-galaxy__orbit auth-galaxy__orbit--two"></span>
+    </div>
     <div class="auth-login-panel auth-login-panel--single">
         <div id="auth-card">
+            <div class="auth-brand-chip">PAMER OPERATIONS</div>
+
             <div class="auth-logo text-center mb-4">
                 <img src="/src/img/PAMERVAL-LOGO.png" alt="Pamerval" class="auth-logo__image">
             </div>
