@@ -1996,6 +1996,34 @@ $selIf    = function ($left, $right) {
             return rows[position];
         }
 
+        function activateEditableCell(cell, attempts = 0) {
+            if (!cell) return;
+
+            activeCell = cell;
+            gridFocused = true;
+
+            const cellElement = cell.getElement();
+            cellElement?.focus?.({ preventScroll: true });
+            cell.edit(true);
+
+            window.setTimeout(() => {
+                const liveElement = cell.getElement();
+                const editorInput = liveElement?.querySelector('input, textarea, [contenteditable="true"]');
+
+                if (editorInput) {
+                    editorInput.focus();
+                    if (typeof editorInput.select === 'function') {
+                        editorInput.select();
+                    }
+                    return;
+                }
+
+                if (attempts < 6) {
+                    activateEditableCell(cell, attempts + 1);
+                }
+            }, attempts === 0 ? 10 : 30);
+        }
+
         async function focusHorizontalCell(cell, direction = 1) {
             const field = cell.getField();
             const currentFieldIndex = editableFields.indexOf(field);
@@ -2038,24 +2066,7 @@ $selIf    = function ($left, $right) {
 
             const targetCell = nextRowComponent.getCell(nextField);
             if (!targetCell) return;
-
-            activeCell = targetCell;
-            gridFocused = true;
-
-            const targetElement = targetCell.getElement();
-            targetElement?.focus?.({ preventScroll: true });
-            targetCell.edit(true);
-
-            window.setTimeout(() => {
-                const liveElement = targetCell.getElement();
-                const editorInput = liveElement?.querySelector('input, textarea, [contenteditable="true"]');
-                if (!editorInput) return;
-
-                editorInput.focus();
-                if (typeof editorInput.select === 'function') {
-                    editorInput.select();
-                }
-            }, 20);
+            activateEditableCell(targetCell);
         }
 
         async function applyPastedMatrix(text) {
