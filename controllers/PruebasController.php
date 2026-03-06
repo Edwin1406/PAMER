@@ -1042,24 +1042,26 @@ class PruebasController
             exit;
         }
 
-        // ====== PDF VERTICAL ======
-        $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
 
         $pdf->SetCreator('Sistema');
-        $pdf->SetAuthor('Importadora');
+        $pdf->SetAuthor('PAMER');
         $pdf->SetTitle("Nota de Pedido {$id_nota}");
+        $pdf->SetSubject('Nota de Pedido');
 
-        $pdf->SetMargins(10, 10, 10);
-        $pdf->SetAutoPageBreak(true, 12);
+        $pdf->SetMargins(12, 12, 12);
+        $pdf->SetAutoPageBreak(true, 16);
 
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
+        $pdf->SetFont('helvetica', '', 9);
 
         $pdf->AddPage();
 
-        self::renderHeader($pdf, $nota);
-        self::renderMetaBox($pdf, $nota);
-        self::renderItemsTable($pdf, $items);
+        self::renderHeaderModern($pdf, $nota);
+        self::renderMetaBoxModern($pdf, $nota);
+        self::renderItemsTableModern($pdf, $items);
+        self::renderPdfFooter($pdf);
 
         $pdf->Output("nota_pedido_{$id_nota}.pdf", 'I');
         exit;
@@ -1208,5 +1210,308 @@ class PruebasController
 
         $pdf->Cell($labelW, 8, 'TOTAL GENERAL:', 1, 0, 'R', true);
         $pdf->Cell(30, 8, number_format($totalGeneral, 2, '.', ''), 1, 1, 'R', true);
+    }
+
+    private static function renderHeaderModern(TCPDF $pdf, $nota): void
+    {
+        $x = 12;
+        $y = 12;
+        $w = $pdf->getPageWidth() - 24;
+        $headerH = 30;
+
+        $pdf->SetDrawColor(7, 18, 35);
+        $pdf->SetFillColor(7, 18, 35);
+        $pdf->RoundedRect($x, $y, $w, $headerH, 5, '1111', 'DF');
+
+        $logoPath = $_SERVER['DOCUMENT_ROOT'] . '/src/img/PAMERVAL-LOGO.png';
+        if (file_exists($logoPath)) {
+            $pdf->Image($logoPath, $x + 7, $y + 6, 64, 0, '', '', '', false, 300);
+        }
+
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetXY($x + 83, $y + 6);
+        $pdf->SetFont('helvetica', 'B', 16);
+        $pdf->Cell(90, 7, 'Nota de Pedido', 0, 1, 'L');
+
+        $pdf->SetX($x + 83);
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(110, 6, (string)($nota->Codigo_Importador ?: 'Importadora R M y Cia.'), 0, 1, 'L');
+
+        $chipX = $x + $w - 60;
+        $chipY = $y + 5;
+        $chipW = 50;
+        $chipH = 20;
+
+        $pdf->SetFillColor(20, 184, 166);
+        $pdf->SetDrawColor(20, 184, 166);
+        $pdf->RoundedRect($chipX, $chipY, $chipW, $chipH, 4, '1111', 'DF');
+
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetXY($chipX, $chipY + 3);
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell($chipW, 5, 'CODIGO', 0, 1, 'C');
+        $pdf->SetX($chipX);
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell($chipW, 7, (string)$nota->Codigo_Nota_Pedido, 0, 1, 'C');
+
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->Ln(10);
+    }
+
+    private static function renderMetaBoxModern(TCPDF $pdf, $nota): void
+    {
+        $x = 12;
+        $gap = 5;
+        $contentW = $pdf->getPageWidth() - 24;
+        $cardW = ($contentW - ($gap * 2)) / 3;
+        $cardH = 38;
+        $y = $pdf->GetY();
+
+        self::renderInfoCardModern(
+            $pdf,
+            $x,
+            $y,
+            $cardW,
+            $cardH,
+            [9, 18, 35],
+            'Operacion',
+            [
+                ['Fecha', (string)$nota->Fecha_Nota_Pedido],
+                ['Moneda', (string)$nota->Moneda_Nota_Pedido],
+                ['Numero', (string)$nota->Numero_Nota_Pedido],
+            ]
+        );
+
+        self::renderInfoCardModern(
+            $pdf,
+            $x + $cardW + $gap,
+            $y,
+            $cardW,
+            $cardH,
+            [15, 118, 110],
+            'Participantes',
+            [
+                ['Importador', (string)$nota->Codigo_Importador],
+                ['Exportador', (string)$nota->Codigo_Exportador],
+                ['Origen', (string)$nota->Pais_Nota_Pedido],
+            ]
+        );
+
+        self::renderInfoCardModern(
+            $pdf,
+            $x + ($cardW + $gap) * 2,
+            $y,
+            $cardW,
+            $cardH,
+            [29, 78, 216],
+            'Condiciones',
+            [
+                ['Pago', (string)$nota->Forma_Pago_Nota_Pedido],
+                ['Remitir', (string)$nota->Remitir_Nota_Pedido],
+                ['Nota', (string)$nota->Codigo_Nota_Pedido],
+            ]
+        );
+
+        $pdf->SetY($y + $cardH + 8);
+    }
+
+    private static function renderItemsTableModern(TCPDF $pdf, array $items): void
+    {
+        $widths = [
+            'etq' => 12,
+            'sald' => 14,
+            'prenda' => 30,
+            'comp' => 52,
+            'cant' => 14,
+            'punit' => 22,
+            'total' => 22,
+            'fact' => 24,
+            'marca' => 46,
+            'orig' => 20,
+            'caja' => 16,
+        ];
+
+        $tableX = 12;
+        $tableY = $pdf->GetY();
+        $tableW = array_sum($widths);
+
+        $pdf->SetFillColor(248, 250, 252);
+        $pdf->SetDrawColor(203, 213, 225);
+        $pdf->RoundedRect($tableX, $tableY, $tableW, 11, 4, '1111', 'DF');
+
+        $pdf->SetXY($tableX + 4, $tableY + 2.2);
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->Cell(0, 6, 'Detalle de articulos', 0, 1, 'L');
+
+        $pdf->SetY($tableY + 14);
+        $pdf->SetDrawColor(203, 213, 225);
+        $pdf->SetFillColor(15, 23, 42);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetFont('helvetica', 'B', 8.5);
+
+        $headers = [
+            'etq' => 'ETQ',
+            'sald' => 'SALDO',
+            'prenda' => 'PRENDA',
+            'comp' => 'COMPOSICION',
+            'cant' => 'CANT',
+            'punit' => 'P. UNIT',
+            'total' => 'TOTAL',
+            'fact' => 'FACTURA',
+            'marca' => 'MARCA',
+            'orig' => 'ORIGEN',
+            'caja' => 'CAJA',
+        ];
+
+        foreach ($headers as $key => $label) {
+            $pdf->Cell($widths[$key], 8, $label, 1, 0, 'C', true);
+        }
+        $pdf->Ln();
+
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', '', 8.5);
+
+        $totalGeneral = 0.0;
+        $rowIndex = 0;
+
+        foreach ($items as $it) {
+            $row = [
+                'etq' => (string)($it->etiqueta ?? ''),
+                'sald' => (string)($it->saldo ?? ''),
+                'prenda' => (string)($it->prenda ?? ''),
+                'comp' => (string)($it->composicion ?? ''),
+                'cant' => (string)($it->cantidad ?? 0),
+                'punit' => number_format((float)($it->precio_unitario ?? 0), 2, '.', ','),
+                'total' => number_format((float)($it->total ?? ((float)($it->precio_unitario ?? 0) * (float)($it->cantidad ?? 0))), 2, '.', ','),
+                'fact' => (string)($it->num_factura ?? ''),
+                'marca' => (string)($it->marca ?? ''),
+                'orig' => (string)($it->pais ?? ''),
+                'caja' => (string)($it->num_caja ?? ''),
+            ];
+
+            $totalGeneral += (float)str_replace(',', '', $row['total']);
+
+            $rowHeight = max(
+                8,
+                self::measureRowHeightModern($pdf, [
+                    [$row['prenda'], $widths['prenda']],
+                    [$row['comp'], $widths['comp']],
+                    [$row['fact'], $widths['fact']],
+                    [$row['marca'], $widths['marca']],
+                ])
+            );
+
+            $fill = $rowIndex % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
+            self::renderTableRowModern($pdf, $widths, $row, $rowHeight, $fill);
+            $rowIndex++;
+        }
+
+        $pdf->Ln(4);
+        $pdf->SetFont('helvetica', 'B', 10.5);
+        $pdf->SetFillColor(15, 118, 110);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->Cell($tableW - 34, 10, 'TOTAL GENERAL', 0, 0, 'R', true);
+        $pdf->Cell(34, 10, number_format($totalGeneral, 2, '.', ','), 0, 1, 'R', true);
+        $pdf->SetTextColor(15, 23, 42);
+    }
+
+    private static function renderInfoCardModern(TCPDF $pdf, float $x, float $y, float $w, float $h, array $accent, string $title, array $rows): void
+    {
+        $pdf->SetDrawColor(226, 232, 240);
+        $pdf->SetFillColor(255, 255, 255);
+        $pdf->RoundedRect($x, $y, $w, $h, 4, '1111', 'DF');
+
+        $pdf->SetFillColor($accent[0], $accent[1], $accent[2]);
+        $pdf->RoundedRect($x, $y, $w, 7.5, 4, '1111', 'F');
+
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetXY($x + 3, $y + 1.4);
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell($w - 6, 4.8, $title, 0, 1, 'L');
+
+        $lineY = $y + 10.5;
+        foreach ($rows as $row) {
+            $label = strtoupper((string)$row[0]);
+            $value = trim((string)$row[1]) !== '' ? (string)$row[1] : '-';
+
+            $pdf->SetXY($x + 3, $lineY);
+            $pdf->SetFont('helvetica', 'B', 6.8);
+            $pdf->SetTextColor(100, 116, 139);
+            $pdf->Cell($w - 6, 3.2, $label, 0, 1, 'L');
+
+            $pdf->SetXY($x + 3, $lineY + 3.4);
+            $pdf->SetFont('helvetica', '', 8.7);
+            $pdf->SetTextColor(15, 23, 42);
+            $pdf->MultiCell($w - 6, 4.8, $value, 0, 'L', false, 1);
+
+            $lineY += 8.8;
+        }
+    }
+
+    private static function measureRowHeightModern(TCPDF $pdf, array $columns): float
+    {
+        $maxLines = 1;
+
+        foreach ($columns as [$text, $width]) {
+            $maxLines = max($maxLines, (int)$pdf->getNumLines((string)$text, $width));
+        }
+
+        return max(8, ($maxLines * 4.8) + 1.6);
+    }
+
+    private static function renderTableRowModern(TCPDF $pdf, array $widths, array $data, float $height, array $fill): void
+    {
+        $alignments = [
+            'etq' => 'C',
+            'sald' => 'C',
+            'prenda' => 'L',
+            'comp' => 'L',
+            'cant' => 'C',
+            'punit' => 'R',
+            'total' => 'R',
+            'fact' => 'C',
+            'marca' => 'L',
+            'orig' => 'C',
+            'caja' => 'C',
+        ];
+
+        $x = $pdf->GetX();
+        $y = $pdf->GetY();
+
+        $pdf->SetFillColor($fill[0], $fill[1], $fill[2]);
+        $pdf->SetDrawColor(226, 232, 240);
+
+        foreach ($widths as $key => $width) {
+            $pdf->MultiCell(
+                $width,
+                $height,
+                (string)($data[$key] ?? ''),
+                1,
+                $alignments[$key] ?? 'L',
+                true,
+                0,
+                $x,
+                $y,
+                true,
+                0,
+                false,
+                true,
+                $height,
+                'M'
+            );
+            $x += $width;
+        }
+
+        $pdf->SetXY(12, $y + $height);
+    }
+
+    private static function renderPdfFooter(TCPDF $pdf): void
+    {
+        $pdf->Ln(6);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->Cell(0, 5, 'Documento generado por PAMER el ' . date('Y-m-d H:i'), 0, 1, 'R');
+        $pdf->SetTextColor(15, 23, 42);
     }
 }

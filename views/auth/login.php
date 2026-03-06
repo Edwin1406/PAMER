@@ -1,29 +1,17 @@
 <div id="auth" class="auth-login-shell">
     <div class="auth-login-panel">
-        <aside class="auth-login-panel__intro">
-            <span class="auth-kicker">PAMER</span>
-            <h1>Control operativo con una experiencia mas clara.</h1>
-            <p>Accede a una interfaz enfocada en velocidad, seguimiento y registro diario de procesos internos.</p>
-
-            <div class="auth-highlights">
-                <div class="auth-highlights__item">
-                    <i class="bi bi-graph-up-arrow"></i>
-                    <span>Indicadores y seguimiento centralizados</span>
-                </div>
-                <div class="auth-highlights__item">
-                    <i class="bi bi-layout-text-window-reverse"></i>
-                    <span>Formularios mas limpios y lectura mas rapida</span>
-                </div>
-                <div class="auth-highlights__item">
-                    <i class="bi bi-shield-check"></i>
-                    <span>Acceso seguro para cada flujo de trabajo</span>
-                </div>
+        <aside class="auth-login-panel__intro auth-login-panel__intro--logo">
+            <div class="auth-brand-stage" aria-hidden="true">
+                <span class="auth-brand-stage__glow auth-brand-stage__glow--a"></span>
+                <span class="auth-brand-stage__glow auth-brand-stage__glow--b"></span>
+                <span class="auth-brand-stage__grid"></span>
+                <img src="/src/img/PAMERVAL-LOGO.png" alt="Pamerval" class="auth-brand-stage__logo">
             </div>
         </aside>
 
         <div id="auth-card">
-            <div class="auth-logo text-center mb-3">
-                <span class="auth-logo__mark">P</span>
+            <div class="auth-logo text-center mb-4">
+                <img src="/src/img/PAMERVAL-LOGO.png" alt="Pamerval" class="auth-logo__image">
             </div>
 
             <h2 class="auth-title text-center">Iniciar sesion</h2>
