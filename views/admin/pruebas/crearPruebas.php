@@ -731,10 +731,12 @@ $selIf    = function ($left, $right) {
     #hot-min .tabulator-col,
     #hot-min .tabulator-cell {
         white-space: nowrap;
+        font-size: .96rem;
     }
 
     #hot-min .tabulator-row .tabulator-cell {
         border-right-color: rgba(226, 232, 240, 0.9);
+        padding: .75rem .7rem;
     }
 
     #hot-min .tabulator-footer {
@@ -2112,15 +2114,16 @@ $selIf    = function ($left, $right) {
 
                     if (event.key === 'Tab') {
                         event.preventDefault();
+                        event.stopPropagation();
                         const movePrev = event.shiftKey;
                         commit().then(() => {
                             window.setTimeout(() => {
                                 if (movePrev) {
-                                    table.navigatePrev();
+                                    cell.navigatePrev();
                                     return;
                                 }
 
-                                table.navigateNext();
+                                cell.navigateNext();
                             }, 0);
                         });
                         return;
@@ -2205,12 +2208,12 @@ $selIf    = function ($left, $right) {
         table = new Tabulator(container, {
             data: initialRows,
             index: '_rowKey',
-            layout: 'fitDataStretch',
+            layout: 'fitDataTable',
             height: '100%',
             placeholder: 'Sin registros cargados',
             tabEndNewRow: () => createBlankRow(),
             columnDefaults: {
-                minWidth: 96,
+                minWidth: 118,
                 resizable: true,
                 vertAlign: 'middle',
             },
