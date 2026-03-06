@@ -4,7 +4,7 @@
     </a>
 </header> -->
 
-<!-- <div class="page-heading"> -->
+<div class="page-heading">
 
 
 <?php
