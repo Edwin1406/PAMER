@@ -944,6 +944,10 @@ $selIf    = function ($left, $right) {
     const hotSaveState = document.getElementById('hotSaveState');
     const toastOkBody = document.getElementById('toastOkBody');
     const toastErrBody = document.getElementById('toastErrBody');
+    let nextDraftId = existentes.reduce((max, row) => {
+        const currentId = Number(row?.id) || 0;
+        return currentId > max ? currentId : max;
+    }, 0) + 1;
 
     function round(n) {
         return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -968,7 +972,7 @@ $selIf    = function ($left, $right) {
 
     function updateGridMeta() {
         if (!hotRowCount) return;
-        const rows = hot.getSourceData().filter(r => r && (r.id || hasKeyData(r))).length;
+        const rows = hot.getSourceData().filter(r => r && (r.id || hasDraftData(r))).length;
         hotRowCount.textContent = `${rows} registro${rows === 1 ? '' : 's'}`;
     }
 
@@ -990,9 +994,28 @@ $selIf    = function ($left, $right) {
         return str(r?.etiqueta) !== '' || str(r?.prenda) !== '';
     }
 
+    function hasDraftData(r) {
+        if (!r) return false;
+
+        return hasKeyData(r)
+            || str(r?.composicion) !== ''
+            || str(r?.num_factura) !== ''
+            || str(r?.num_caja) !== ''
+            || str(r?.bodega) !== ''
+            || (Number(r?.cantidad) || 0) > 0
+            || (Number(r?.precio_unitario) || 0) > 0;
+    }
+
+    function ensureDraftId(row) {
+        if (!row || row.id || !hasDraftData(row)) return;
+        if (!row._draftId) {
+            row._draftId = nextDraftId++;
+        }
+    }
+
     function isEmptySpareRow(r) {
         if (!r) return true;
-        return !r.id && !hasKeyData(r) && !(Number(r.cantidad) || 0) && !(Number(r.precio_unitario) || 0);
+        return !r.id && !hasDraftData(r);
     }
 
     const hot = new Handsontable(container, {
@@ -1003,7 +1026,13 @@ $selIf    = function ($left, $right) {
         ],
         columns: [{
                 data: 'id',
-                readOnly: true
+                readOnly: true,
+                renderer(inst, td, row) {
+                    const currentRow = inst.getSourceDataAtRow(row) || {};
+                    const displayId = currentRow.id || currentRow._draftId || '';
+                    td.classList.add('text-mono');
+                    td.textContent = displayId;
+                }
             },
 
             {
@@ -1219,18 +1248,22 @@ $selIf    = function ($left, $right) {
         r.id_tienda = ID_TIENDA;
 
         r.total = round(r.cantidad * r.precio_unitario);
+        ensureDraftId(r);
 
         hot.render();
     }
 
     function filasNuevas() {
         // ✅ Solo filas sin id y con “clave” (no por solo cantidad)
-        return hot.getSourceData().filter(r => r && !r.id && hasKeyData(r));
+        return hot.getSourceData().filter(r => r && !r.id && hasDraftData(r));
     }
 
     async function saveOrUpdateFila(row) {
         // ✅ Si no tiene id, NO crear si no hay clave
-        if (!row.id && !hasKeyData(row)) return true;
+        if (!row.id && !hasDraftData(row)) return true;
+        if (row._savePromise) return await row._savePromise;
+
+        ensureDraftId(row);
 
         const fd = new FormData();
         fd.append('id_nota', ID_NOTA ?? row.codigo_nota_pedido ?? '');
@@ -1255,33 +1288,49 @@ $selIf    = function ($left, $right) {
 
         const url = row.id ? '/admin/pruebas/actualizarPruebas' : '/admin/pruebas/crearPruebasAjax';
 
-        const resp = await fetch(url, {
-            method: 'POST',
-            body: fd,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            },
-            credentials: 'same-origin'
-        });
+        const pendingRequest = (async () => {
+            const resp = await fetch(url, {
+                method: 'POST',
+                body: fd,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin'
+            });
 
-        let json = null;
+            let json = null;
+            try {
+                json = await resp.json();
+            } catch {}
+
+            if (json?.ok) {
+                if (json.id) {
+                    row.id = json.id;
+                    delete row._draftId;
+                }
+                row.codigo_nota_pedido = ID_NOTA || row.codigo_nota_pedido;
+                row.tienda = row.tienda || tienda;
+                row.marca = row.marca || marca;
+                row.pais = row.pais || pais;
+                row.num_factura = row.num_factura || num_factura;
+                hot.render();
+                return true;
+            }
+
+            console.warn('saveOrUpdateFila error:', json);
+            return false;
+        })();
+
+        row._savePromise = pendingRequest;
+
         try {
-            json = await resp.json();
-        } catch {}
-
-        if (json?.ok) {
-            if (json.id) row.id = json.id; // si fue insert o upsert
-            row.codigo_nota_pedido = ID_NOTA || row.codigo_nota_pedido;
-            row.tienda = row.tienda || tienda;
-            row.marca = row.marca || marca;
-            row.pais = row.pais || pais;
-            row.num_factura = row.num_factura || num_factura;
-            return true;
+            return await pendingRequest;
+        } finally {
+            if (row._savePromise === pendingRequest) {
+                delete row._savePromise;
+            }
         }
-
-        console.warn('saveOrUpdateFila error:', json);
-        return false;
     }
 
     async function refreshTabla() {
@@ -1345,7 +1394,7 @@ $selIf    = function ($left, $right) {
             if (!r) continue;
 
             // ✅ No guardes la spare row ni filas sin “clave”
-            if (!r.id && !hasKeyData(r)) continue;
+            if (!r.id && !hasDraftData(r)) continue;
             if (isEmptySpareRow(r)) continue;
 
             const exito = await saveOrUpdateFila(r);
