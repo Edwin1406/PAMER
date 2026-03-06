@@ -944,6 +944,7 @@ $selIf    = function ($left, $right) {
     const hotSaveState = document.getElementById('hotSaveState');
     const toastOkBody = document.getElementById('toastOkBody');
     const toastErrBody = document.getElementById('toastErrBody');
+    const rowSaveQueueMap = new Map();
     let nextDraftId = existentes.reduce((max, row) => {
         const currentId = Number(row?.id) || 0;
         return currentId > max ? currentId : max;
@@ -1013,20 +1014,58 @@ $selIf    = function ($left, $right) {
         }
     }
 
-    async function queueRowSave(row) {
+    function findSourceRowIndex(targetRow) {
+        const sourceData = hot.getSourceData();
+
+        return sourceData.findIndex((row) => {
+            if (!row) return false;
+            if (row === targetRow) return true;
+
+            if (targetRow?._draftId && row._draftId === targetRow._draftId) {
+                return true;
+            }
+
+            if (targetRow?.id && row.id === targetRow.id) {
+                return true;
+            }
+
+            return false;
+        });
+    }
+
+    function getRowQueueKey(row, rowIndex = null) {
+        if (!row) return null;
+        if (row.id) return `row-id:${row.id}`;
+
+        ensureDraftId(row);
+        if (row._draftId) return `row-draft:${row._draftId}`;
+
+        if (rowIndex !== null && rowIndex >= 0) return `row-index:${rowIndex}`;
+        return null;
+    }
+
+    async function queueRowSave(row, rowIndex = null) {
         if (!row || isEmptySpareRow(row)) return true;
 
-        row._pendingSync = true;
+        const queueKey = getRowQueueKey(row, rowIndex);
+        if (!queueKey) return true;
 
-        if (row._saveQueuePromise) {
-            return row._saveQueuePromise;
+        const existingEntry = rowSaveQueueMap.get(queueKey);
+        if (existingEntry) {
+            existingEntry.pending = true;
+            return existingEntry.promise;
         }
 
-        row._saveQueuePromise = (async () => {
+        const entry = {
+            pending: true,
+            promise: null
+        };
+
+        entry.promise = (async () => {
             let ok = true;
 
-            while (row._pendingSync) {
-                row._pendingSync = false;
+            while (entry.pending) {
+                entry.pending = false;
                 const saved = await saveOrUpdateFila(row);
                 if (!saved) {
                     ok = false;
@@ -1034,11 +1073,12 @@ $selIf    = function ($left, $right) {
                 }
             }
 
-            delete row._saveQueuePromise;
+            rowSaveQueueMap.delete(queueKey);
             return ok;
         })();
 
-        return row._saveQueuePromise;
+        rowSaveQueueMap.set(queueKey, entry);
+        return entry.promise;
     }
 
     function isEmptySpareRow(r) {
@@ -1202,8 +1242,8 @@ $selIf    = function ($left, $right) {
         allowInsertColumn: false,
         allowRemoveColumn: false,
 
-        afterChange(changes, source) {
-            if (!changes || source === 'loadData') return;
+        async afterChange(changes, source) {
+            if (!changes || source === 'loadData' || source === 'server-sync') return;
 
             const rowsToUpdate = new Set();
             for (const [row, prop] of changes) {
@@ -1213,7 +1253,7 @@ $selIf    = function ($left, $right) {
             if (rowsToUpdate.size) {
                 setSaveState('Guardando cambios...', 'saving');
                 rowsToUpdate.forEach(r => recalcRow(r));
-                maybeAutosave([...rowsToUpdate]);
+                await maybeAutosave([...rowsToUpdate]);
             }
             updateGridMeta();
         },
@@ -1332,8 +1372,15 @@ $selIf    = function ($left, $right) {
 
         if (json?.ok) {
             if (json.id) {
-                row.id = json.id;
-                delete row._draftId;
+                row.id = Number(json.id);
+
+                const rowIndex = findSourceRowIndex(row);
+                if (rowIndex >= 0) {
+                    hot.setDataAtRowProp(rowIndex, 'id', row.id, 'server-sync');
+                }
+            } else if (!row.id) {
+                setSaveState('Sincronizando id de la fila...', 'saving');
+                await refreshTabla();
             }
             row.codigo_nota_pedido = ID_NOTA || row.codigo_nota_pedido;
             row.tienda = row.tienda || tienda;
@@ -1385,7 +1432,7 @@ $selIf    = function ($left, $right) {
 
         for (const r of nuevas) {
             recalcRow(hot.getSourceData().indexOf(r));
-            const exito = await queueRowSave(r);
+            const exito = await queueRowSave(r, hot.getSourceData().indexOf(r));
             if (!exito) ok = false;
         }
 
@@ -1412,7 +1459,7 @@ $selIf    = function ($left, $right) {
             if (!r.id && !hasDraftData(r)) continue;
             if (isEmptySpareRow(r)) continue;
 
-            const exito = await queueRowSave(r);
+            const exito = await queueRowSave(r, idx);
             if (!exito) ok = false;
         }
 
