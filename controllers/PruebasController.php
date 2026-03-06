@@ -613,12 +613,25 @@ class PruebasController
             return;
         }
 
-        // ✅ Si NO existe → guardar
-        $ok = $carrito->guardar();
+        // ✅ Si NO existe → guardar y recuperar el id real insertado
+        $resultado = $carrito->guardar();
+        $ok = false;
+        $insertId = null;
+
+        if (is_array($resultado)) {
+            $ok = !empty($resultado['resultado']);
+            $insertId = $resultado['id'] ?? null;
+        } else {
+            $ok = (bool)$resultado;
+        }
 
         if (!$ok) {
             echo json_encode(['ok' => false, 'error' => 'db-save-failed'], JSON_UNESCAPED_UNICODE);
             return;
+        }
+
+        if ($insertId) {
+            $carrito->id = (int)$insertId;
         }
 
         echo json_encode(['ok' => true, 'id' => $carrito->id], JSON_UNESCAPED_UNICODE);
