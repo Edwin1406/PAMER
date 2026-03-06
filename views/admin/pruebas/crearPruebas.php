@@ -2029,9 +2029,24 @@ $selIf    = function ($left, $right) {
 
             if (!nextCell) return;
 
-            nextCell.getElement()?.click();
+            activeCell = nextCell;
+            gridFocused = true;
+
+            const nextElement = nextCell.getElement();
+            nextElement?.focus?.();
+
             window.setTimeout(() => {
                 nextCell.edit();
+
+                window.setTimeout(() => {
+                    const editorInput = nextElement?.querySelector('input, textarea, [contenteditable="true"]');
+                    if (!editorInput) return;
+
+                    editorInput.focus();
+                    if (typeof editorInput.select === 'function') {
+                        editorInput.select();
+                    }
+                }, 0);
             }, 0);
         }
 
